@@ -9,6 +9,7 @@ import { ArchitecturePage } from './ArchitecturePage'
 import { devicePricingCapturedAt } from './services/device-pricing'
 import { additionalLinePrices, catalog, featuredPromotions, homeWifiOffer, mobilePlans, offerSnapshotDate, offers, productCards } from './services/offers'
 import homeHeroImage from './assets/home-hero.png'
+import aboutHeroImage from './assets/about-hero.png'
 import { beginTroubleshooting, completeDiagnostics, isModemImageShareRequest, isTroubleshootingRequest, recordTroubleshootingResponse, TroubleshootingState, troubleshootingReply } from './services/troubleshooting'
 import { advanceDeviceUpgrade, beginDeviceUpgrade, completeTradeIn, describeDeviceMatch, deviceMonthlyPrice, deviceUpgradeQuestion, DeviceUpgradeStage, DeviceUpgradeState, isDeviceUpgradeRequest, tradeInAssessmentReply } from './services/device-upgrade'
 import { answerDemoJourney, currentDemoJourneyStep, demoJourneyOpening, demoJourneyReprompt, isDemoAnswerAcceptable, DemoJourneyId, DemoJourneyState, startDemoJourney } from './services/demo-journeys'
@@ -947,6 +948,7 @@ function AboutSpectrumPage({ onNavigate }: { onNavigate: (page: Page) => void })
   return <div className="about-page">
     <div className="about-subnav"><div className="page-width about-subnav-inner"><button className="about-subnav-brand" onClick={() => onNavigate('home')}>SPECTRUM <span>ABOUT</span></button><nav aria-label="About Spectrum"><button className="about-current" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>About Spectrum</button><button onClick={() => document.getElementById('about-pillars')?.scrollIntoView({ behavior: 'smooth' })}>Our businesses</button><button onClick={() => document.getElementById('about-impact')?.scrollIntoView({ behavior: 'smooth' })}>Our impact</button><button onClick={() => document.getElementById('about-news')?.scrollIntoView({ behavior: 'smooth' })}>News &amp; Stories</button></nav><button className="about-home-link" onClick={() => onNavigate('home')}>Spectrum.com <Icon name="arrow" size={14} /></button></div></div>
     <section className="about-hero">
+      <img className="about-hero-image" src={aboutHeroImage} alt="" aria-hidden="true" />
       <div className="about-hero-shade" aria-hidden="true" />
       <div className="page-width about-hero-content"><span className="eyebrow">ABOUT SPECTRUM</span><h1>America’s connectivity<br />and entertainment company</h1><p>Connecting people to what matters most — in their homes, in their communities, and in the moments we share.</p><button className="about-hero-cta" onClick={() => document.getElementById('about-pillars')?.scrollIntoView({ behavior: 'smooth' })}>Discover Spectrum <Icon name="arrow" size={16} /></button></div>
       <span className="about-hero-caption">CONNECTION IS WHERE IT ALL BEGINS</span>
