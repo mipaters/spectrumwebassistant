@@ -8,6 +8,7 @@ import { answerBillJourney, beginBillJourney, BillJourneyKind, BillJourneyState,
 import { ArchitecturePage } from './ArchitecturePage'
 import { devicePricingCapturedAt } from './services/device-pricing'
 import { additionalLinePrices, catalog, featuredPromotions, homeWifiOffer, mobilePlans, offerSnapshotDate, offers, productCards } from './services/offers'
+import homeHeroImage from './assets/home-hero.png'
 import { beginTroubleshooting, completeDiagnostics, isModemImageShareRequest, isTroubleshootingRequest, recordTroubleshootingResponse, TroubleshootingState, troubleshootingReply } from './services/troubleshooting'
 import { advanceDeviceUpgrade, beginDeviceUpgrade, completeTradeIn, describeDeviceMatch, deviceMonthlyPrice, deviceUpgradeQuestion, DeviceUpgradeStage, DeviceUpgradeState, isDeviceUpgradeRequest, tradeInAssessmentReply } from './services/device-upgrade'
 import { answerDemoJourney, currentDemoJourneyStep, demoJourneyOpening, demoJourneyReprompt, isDemoAnswerAcceptable, DemoJourneyId, DemoJourneyState, startDemoJourney } from './services/demo-journeys'
@@ -884,7 +885,7 @@ function HomePage({ onNavigate, onAdd, onDemo }: { onNavigate: (page: Page) => v
 
   return <>
     <section className="availability-hero">
-      <div className="availability-hero-art" aria-hidden="true"><AvailabilityArt /></div>
+      <div className="availability-hero-art" aria-hidden="true"><img src={homeHeroImage} alt="" /></div>
       <div className="page-width availability-layout">
         <div className="availability-card">
           <span className="eyebrow availability-eyebrow">GET STARTED WITH SPECTRUM</span>
@@ -1005,21 +1006,6 @@ function StreamingArtwork() {
     </svg>
     <span className="tv-promo-phone"><i /><b>TV</b><small>STREAM TV</small></span>
   </div>
-}
-
-function AvailabilityArt() {
-  return <svg className="availability-art-svg" viewBox="0 0 640 560" role="presentation" aria-hidden="true">
-    <defs>
-      <linearGradient id="availSky" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#1a5fb4" /><stop offset=".55" stopColor="#0d3a78" /><stop offset="1" stopColor="#071f45" /></linearGradient>
-      <radialGradient id="availGlow" cx=".5" cy=".4" r=".6"><stop stopColor="#5aa8ff" stopOpacity=".55" /><stop offset="1" stopColor="#5aa8ff" stopOpacity="0" /></radialGradient>
-    </defs>
-    <rect width="640" height="560" fill="url(#availSky)" />
-    <circle cx="320" cy="230" r="260" fill="url(#availGlow)" />
-    {[150, 200, 250, 300].map((r) => <circle key={r} cx="320" cy="380" r={r} fill="none" stroke="#ffffff33" strokeWidth="2" />)}
-    <g transform="translate(320 380)"><rect x="-46" y="-34" width="92" height="68" rx="10" fill="#0b2a55" stroke="#8fc2ff" strokeWidth="2" /><path d="M-30 -34 0 -62 30 -34Z" fill="#8fc2ff" /><rect x="-16" y="4" width="32" height="30" fill="#07152e" /></g>
-    <g fill="#ffb648"><circle cx="110" cy="120" r="7" /><circle cx="520" cy="90" r="5" /><circle cx="470" cy="420" r="6" /><circle cx="90" cy="440" r="5" /></g>
-    <g fill="#ffffff"><text x="180" y="260" fontSize="26">✳</text><text x="470" y="200" fontSize="20">✦</text><text x="150" y="460" fontSize="18">✦</text></g>
-  </svg>
 }
 
 function PromoCard({ offer, index, onClick }: { offer: (typeof offers)[number]; index: number; onClick: () => void }) {
