@@ -67,14 +67,14 @@ export function isPlanJourneyRequest(message: string): boolean {
   return planIntent.test(message) && /\b(new|need|looking|want|recommend|help|find|switch|change)\b/i.test(message)
 }
 
-const journeyOrder: JourneyStage[] = ['dataAndLines', 'mobileProvider', 'device', 'phoneUsage', 'travel', 'homeServices', 'budget']
+const journeyOrder: JourneyStage[] = ['homeServices', 'dataAndLines', 'mobileProvider', 'device', 'phoneUsage', 'travel', 'budget']
 const journeyQuestions: Record<JourneyStage, string> = {
   dataAndLines: 'How much mobile data do you typically use each month, and how many lines do you need? For example, “50 GB and one line.”',
   mobileProvider: 'Who is your current mobile provider? You can also say “new customer” or “not sure.”',
   device: 'Are you bringing your current phone or looking to upgrade? About how old is your device?',
   phoneUsage: 'What do you mainly use your phone for? For example, streaming video, gaming, email, web browsing, or video calls and meetings.',
   travel: 'How often do you travel outside the U.S., and where do you usually go? “Rarely” or “not sure” is fine.',
-  homeServices: 'Who provides your home Internet and TV, and are you open to switching or bundling services?',
+  homeServices: 'First, let’s check your home Internet — Spectrum is Internet-first, and bundling Mobile with Internet gets you the best pricing. Do you already have Spectrum Internet, or who provides your home Internet and TV today?',
   budget: 'What matters most for your monthly budget: the lowest price, a balance of price and benefits, or the most included?',
 }
 
