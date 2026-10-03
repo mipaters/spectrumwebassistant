@@ -7,12 +7,12 @@ import { analyzeImage, ImageAnalysis, ImageAnalysisType } from './services/image
 import { answerBillJourney, beginBillJourney, BillJourneyKind, BillJourneyState, billJourneyPrompt, estimateSpectrum, BillPhone, detectBillJourneyKind, isBillImageShareRequest } from './services/bill-journey'
 import { ArchitecturePage } from './ArchitecturePage'
 import { devicePricingCapturedAt } from './services/device-pricing'
-import { additionalLinePrices, catalog, featuredPromotions, homeWifiOffer, mobilePlans, offerSnapshotDate, offers, productCards, spectrumPerks } from './services/offers'
+import { additionalLinePrices, catalog, featuredPromotions, homeWifiOffer, mobilePlans, offerSnapshotDate, offers, productCards } from './services/offers'
 import { beginTroubleshooting, completeDiagnostics, isModemImageShareRequest, isTroubleshootingRequest, recordTroubleshootingResponse, TroubleshootingState, troubleshootingReply } from './services/troubleshooting'
 import { advanceDeviceUpgrade, beginDeviceUpgrade, completeTradeIn, describeDeviceMatch, deviceMonthlyPrice, deviceUpgradeQuestion, DeviceUpgradeStage, DeviceUpgradeState, isDeviceUpgradeRequest, tradeInAssessmentReply } from './services/device-upgrade'
 import { answerDemoJourney, currentDemoJourneyStep, demoJourneyOpening, demoJourneyReprompt, isDemoAnswerAcceptable, DemoJourneyId, DemoJourneyState, startDemoJourney } from './services/demo-journeys'
 
-type Page = 'home' | 'mobile' | 'internet' | 'tv' | 'smartHome' | 'homePhone' | 'devices' | 'support' | 'account' | 'cart' | 'checkout' | 'bank' | 'about' | 'architecture'
+type Page = 'home' | 'mobile' | 'internet' | 'tv' | 'smartHome' | 'homePhone' | 'devices' | 'support' | 'account' | 'cart' | 'checkout' | 'about' | 'architecture'
 type IconName = 'search' | 'person' | 'cart' | 'chevron' | 'arrow' | 'close' | 'menu' | 'spark' | 'send' | 'reset' | 'wifi' | 'phone' | 'home' | 'play' | 'shield' | 'globe' | 'check' | 'mic' | 'speaker'
 
 function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
@@ -41,12 +41,12 @@ function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
 }
 
 function SpectrumLogo({ className = '' }: { className?: string }) {
-  return <span className={`spectrum-logo ${className}`} aria-label="Spectrum" role="img"><svg viewBox="0 0 120 32" aria-hidden="true"><path d="M2 28 14 4h7L9 28H2Z" /><path d="M20 28 32 4h7L27 28h-7Z" /><path d="M38 28 50 4h7L45 28h-7Z" /></svg><span className="spectrum-wordmark">SPECTRUM</span></span>
+  return <span className={`spectrum-logo ${className}`} aria-label="Spectrum" role="img"><span className="spectrum-wordmark">Spectrum</span><svg className="spectrum-logo-arrow" viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 2.5v15l13-7.5z" /></svg></span>
 }
 
 const navigation: { label: string; page: Page }[] = [
-  { label: 'Mobile', page: 'mobile' }, { label: 'Internet', page: 'internet' }, { label: 'TV & Streaming', page: 'tv' },
-  { label: 'Home WiFi', page: 'smartHome' }, { label: 'Spectrum Perks', page: 'bank' }, { label: 'Phones & Devices', page: 'devices' },
+  { label: 'Internet', page: 'internet' }, { label: 'Mobile', page: 'mobile' }, { label: 'TV & Streaming', page: 'tv' },
+  { label: 'Home WiFi', page: 'smartHome' }, { label: 'Phones & Devices', page: 'devices' },
   { label: 'My Offers', page: 'account' }, { label: 'Support', page: 'support' },
 ]
 
@@ -613,7 +613,7 @@ function App() {
             </div>
           </div>
         </div>
-        {searchOpen && <div className="search-panel"><div className="search-inner page-width"><Icon name="search" /><input autoFocus value={searchText} onChange={(event) => setSearchText(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') navigate(searchText.toLowerCase().includes('bank') || searchText.toLowerCase().includes('cash back') || searchText.toLowerCase().includes('credit card') ? 'bank' : searchText.toLowerCase().includes('internet') ? 'internet' : searchText.toLowerCase().includes('phone') || searchText.toLowerCase().includes('device') ? 'devices' : 'mobile') }} placeholder="What are you looking for?" aria-label="Search Spectrum" /><button onClick={() => navigate(searchText.toLowerCase().includes('bank') || searchText.toLowerCase().includes('cash back') || searchText.toLowerCase().includes('credit card') ? 'bank' : searchText.toLowerCase().includes('internet') ? 'internet' : 'mobile')}>Search <Icon name="arrow" size={15} /></button></div><div className="search-suggestions page-width"><span>Popular:</span>{['5G plans', 'Internet deals', 'New phones', 'Spectrum Bank cards'].map((item) => <button key={item} onClick={() => { setSearchText(item); navigate(item.toLowerCase().includes('bank') ? 'bank' : item.includes('Internet') ? 'internet' : item.includes('phones') ? 'devices' : 'mobile') }}>{item}</button>)}</div></div>}
+        {searchOpen && <div className="search-panel"><div className="search-inner page-width"><Icon name="search" /><input autoFocus value={searchText} onChange={(event) => setSearchText(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') navigate(searchText.toLowerCase().includes('internet') ? 'internet' : searchText.toLowerCase().includes('phone') || searchText.toLowerCase().includes('device') ? 'devices' : 'mobile') }} placeholder="What are you looking for?" aria-label="Search Spectrum" /><button onClick={() => navigate(searchText.toLowerCase().includes('internet') ? 'internet' : 'mobile')}>Search <Icon name="arrow" size={15} /></button></div><div className="search-suggestions page-width"><span>Popular:</span>{['5G plans', 'Internet deals', 'New phones'].map((item) => <button key={item} onClick={() => { setSearchText(item); navigate(item.includes('Internet') ? 'internet' : item.includes('phones') ? 'devices' : 'mobile') }}>{item}</button>)}</div></div>}
       </header>
 
       <main>
@@ -625,7 +625,6 @@ function App() {
         {page === 'homePhone' && <CategoryPage category="homePhone" onAdd={addToCart} onChat={() => setSpectraOpen(true)} />}
         {page === 'devices' && <DevicesPage onAdd={addToCart} />}
         {page === 'architecture' && <ArchitecturePage onChat={() => setSpectraOpen(true)} />}
-        {page === 'bank' && <SpectrumPerksPage />}
         {page === 'about' && <AboutSpectrumPage onNavigate={navigate} />}
         {page === 'support' && <SupportPage onNavigate={navigate} onChat={() => setSpectraOpen(true)} />}
         {page === 'account' && <AccountPage signedIn={signedIn} email={email} setEmail={setEmail} onSignIn={() => setSignedIn(true)} onChat={() => setSpectraOpen(true)} />}
@@ -877,9 +876,42 @@ function RecommendationSummary({ profile, recommendation, onAdd }: { profile: Cu
 
 function HomePage({ onNavigate, onAdd, onDemo }: { onNavigate: (page: Page) => void; onAdd: (label: string) => void; onDemo: () => void }) {
   const activeOffer = offers.find((offer) => offer.category === 'mobile')!
+  const internetOffer = offers.find((offer) => offer.category === 'internet')!
   const streamingOffer = featuredPromotions.find((offer) => offer.id === 'streaming-apps-included')!
+  const [checking, setChecking] = useState(false)
+  const [address, setAddress] = useState('')
+  const [checked, setChecked] = useState(false)
+
   return <>
-    <section className="hero home-hero"><div className="hero-image hero-image-home" aria-hidden="true" /><div className="page-width hero-content"><span className="eyebrow"><i /> A LITTLE MORE POSSIBLE</span><h1>Connection,<br />made for <em>you.</em></h1><p>From everyday moments to the big ones, get more out of the things that bring us together.</p><div className="hero-actions"><button className="button-primary" onClick={() => onNavigate('mobile')}>Find your plan <Icon name="arrow" size={16} /></button><button className="button-text-light" onClick={onDemo}><Icon name="play" size={16} /> Discover the experience</button></div><span className="hero-caption">A better connection starts with a conversation.</span></div><div className="hero-slide-mark">01 <span /> 03</div></section>
+    <section className="availability-hero">
+      <div className="availability-hero-art" aria-hidden="true"><AvailabilityArt /></div>
+      <div className="page-width availability-layout">
+        <div className="availability-card">
+          <span className="eyebrow availability-eyebrow">GET STARTED WITH SPECTRUM</span>
+          <h1 className="availability-heading">Say hi to fast<br />Internet and WiFi</h1>
+          <p className="availability-copy">{internetOffer.description}</p>
+          <div className="availability-price">
+            <span className="availability-price-label">{internetOffer.title}</span>
+            <div className="availability-price-value"><strong>{internetOffer.price}</strong><em>/mo</em></div>
+            <small>{internetOffer.priceNote}</small>
+          </div>
+          {!checking && <>
+            <button className="button-primary availability-cta" onClick={() => setChecking(true)}>Check availability <Icon name="arrow" size={16} /></button>
+            <p className="availability-signin">Already a Spectrum customer? <button onClick={() => onNavigate('account')}>Sign in</button></p>
+          </>}
+          {checking && !checked && <form className="availability-form" onSubmit={(event) => { event.preventDefault(); setChecked(true) }}>
+            <label htmlFor="availability-address">Enter your address</label>
+            <input id="availability-address" required autoFocus value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Street address, city, state" />
+            <div className="availability-form-actions"><button type="submit" className="button-primary">Check availability <Icon name="arrow" size={16} /></button><button type="button" className="button-text-dark" onClick={() => setChecking(false)}>Cancel</button></div>
+          </form>}
+          {checked && <div className="availability-result">
+            <span className="availability-result-icon"><Icon name="check" size={18} /></span>
+            <div><strong>Good news — Spectrum is available at your address.</strong><p>{internetOffer.title} starting at {internetOffer.price}/mo {internetOffer.priceNote}.</p></div>
+            <button className="button-primary" onClick={() => onNavigate('internet')}>See Internet plans <Icon name="arrow" size={16} /></button>
+          </div>}
+        </div>
+      </div>
+    </section>
     <div className="trust-strip page-width"><span><Icon name="globe" /> America’s most reliable 5G network</span><span><Icon name="shield" /> Support when you need it</span><span><Icon name="wifi" /> Better together at home</span><button onClick={() => onNavigate('support')}>Why Spectrum <Icon name="arrow" size={14} /></button></div>
     <section className="tv-promo-feature" aria-label="Spectrum TV streaming apps">
       <div className="tv-promo-offer">
@@ -973,6 +1005,21 @@ function StreamingArtwork() {
     </svg>
     <span className="tv-promo-phone"><i /><b>TV</b><small>STREAM TV</small></span>
   </div>
+}
+
+function AvailabilityArt() {
+  return <svg className="availability-art-svg" viewBox="0 0 640 560" role="presentation" aria-hidden="true">
+    <defs>
+      <linearGradient id="availSky" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#1a5fb4" /><stop offset=".55" stopColor="#0d3a78" /><stop offset="1" stopColor="#071f45" /></linearGradient>
+      <radialGradient id="availGlow" cx=".5" cy=".4" r=".6"><stop stopColor="#5aa8ff" stopOpacity=".55" /><stop offset="1" stopColor="#5aa8ff" stopOpacity="0" /></radialGradient>
+    </defs>
+    <rect width="640" height="560" fill="url(#availSky)" />
+    <circle cx="320" cy="230" r="260" fill="url(#availGlow)" />
+    {[150, 200, 250, 300].map((r) => <circle key={r} cx="320" cy="380" r={r} fill="none" stroke="#ffffff33" strokeWidth="2" />)}
+    <g transform="translate(320 380)"><rect x="-46" y="-34" width="92" height="68" rx="10" fill="#0b2a55" stroke="#8fc2ff" strokeWidth="2" /><path d="M-30 -34 0 -62 30 -34Z" fill="#8fc2ff" /><rect x="-16" y="4" width="32" height="30" fill="#07152e" /></g>
+    <g fill="#ffb648"><circle cx="110" cy="120" r="7" /><circle cx="520" cy="90" r="5" /><circle cx="470" cy="420" r="6" /><circle cx="90" cy="440" r="5" /></g>
+    <g fill="#ffffff"><text x="180" y="260" fontSize="26">✳</text><text x="470" y="200" fontSize="20">✦</text><text x="150" y="460" fontSize="18">✦</text></g>
+  </svg>
 }
 
 function PromoCard({ offer, index, onClick }: { offer: (typeof offers)[number]; index: number; onClick: () => void }) {
@@ -1120,55 +1167,6 @@ function HomeWifiPage({ onAdd, onChat }: { onAdd: (label: string) => void; onCha
   </>
 }
 
-function SpectrumPerksPage() {
-  const [perkType, setPerkType] = useState<'Personal' | 'Business'>('Personal')
-  const visiblePerks = spectrumPerks.filter((perk) => perkType === 'Business' ? perk.id === 'business' : perk.id !== 'business')
-
-  return <>
-    <div className="bank-page">
-      <div className="bank-local-nav"><div className="page-width bank-local-nav-inner"><strong>SPECTRUM PERKS</strong><nav aria-label="Spectrum Perks"><button onClick={() => document.getElementById('bank-cards')?.scrollIntoView({ behavior: 'smooth' })}>Perks</button><button onClick={() => document.getElementById('bank-rewards')?.scrollIntoView({ behavior: 'smooth' })}>Benefits</button><button onClick={() => document.getElementById('bank-security')?.scrollIntoView({ behavior: 'smooth' })}>Help</button><button onClick={() => document.getElementById('bank-cards')?.scrollIntoView({ behavior: 'smooth' })}>Offers</button></nav><button className="bank-sign-in" onClick={() => document.getElementById('bank-cards')?.scrollIntoView({ behavior: 'smooth' })}>Sign in <Icon name="person" size={15} /></button></div></div>
-      <section className="bank-hero">
-        <div className="page-width bank-hero-inner">
-          <div className="bank-hero-copy"><span className="eyebrow">SPECTRUM PERKS</span><h1>More value,<br />the more you <em>connect.</em></h1><p>No contracts, bundle savings and Spectrum Mobile savings — built in, not a credit card.</p><div className="bank-hero-actions"><button className="button-primary" onClick={() => document.getElementById('bank-cards')?.scrollIntoView({ behavior: 'smooth' })}>Explore perks <Icon name="arrow" size={16} /></button><span>No annual contracts</span></div></div>
-          <PerksHeroArt />
-        </div>
-      </section>
-      <section className="bank-reward-strip page-width" id="bank-rewards">
-        <article><span className="bank-reward-icon"><Icon name="spark" size={20} /></span><div><strong>No annual contracts</strong><p>Switch, pause or cancel anytime.</p></div></article>
-        <article><span className="bank-reward-icon"><Icon name="globe" size={20} /></span><div><strong>Bundle &amp; save</strong><p>More value the more services you combine.</p></div></article>
-        <article><span className="bank-reward-icon"><Icon name="shield" size={20} /></span><div><strong>Spectrum Mobile savings</strong><p>Save up to 40% vs. the other big carriers.</p></div></article>
-      </section>
-      <section className="bank-cards-section" id="bank-cards">
-        <div className="page-width">
-          <div className="bank-section-heading"><span className="eyebrow eyebrow-red">SPECTRUM PERKS</span><h2>There’s a Spectrum perk<br />that’s right for you.</h2><p>Choose the perk that fits the way you live, spend and connect.</p></div>
-          <div className="bank-card-tabs" role="tablist" aria-label="Choose perk type">{(['Personal', 'Business'] as const).map((type) => <button key={type} role="tab" aria-selected={perkType === type} className={perkType === type ? 'bank-tab-active' : ''} onClick={() => setPerkType(type)}>{type}</button>)}</div>
-          <div className={`bank-product-grid ${perkType === 'Business' ? 'bank-product-grid-business' : ''}`}>
-            {visiblePerks.map((perk) => <article className="bank-product-card" key={perk.id}>
-              <div className={`bank-credit-card bank-card-${perk.style}`} aria-label={`${perk.name} illustration`}>
-                <span className="bank-card-wordmark">SPECTRUM<span> PERKS</span></span><span className="bank-card-network">no annual<br />contract</span><i className="bank-chip" /><b className="bank-card-circles"><i /><i /></b>
-              </div>
-              <div className="bank-product-copy"><span className="bank-card-tier">{perk.tier}</span><h3>{perk.name}</h3><p className="bank-card-headline">{perk.headline}</p><div className="bank-card-reward"><strong>{perk.cashBack}</strong><span>what you get</span></div><ul><li>{perk.usd}</li><li>{perk.insurance}</li></ul><details className="bank-card-details"><summary>Eligibility &amp; details</summary><p>{perk.qualification}</p><p>Availability may vary by location and service. See spectrum.com for current terms.</p></details><button className="bank-card-cta" onClick={() => document.getElementById('bank-compare')?.scrollIntoView({ behavior: 'smooth' })}>Compare perk <Icon name="arrow" size={15} /></button></div>
-            </article>)}
-          </div>
-          <p className="bank-disclaimer">Perk details are a reference snapshot captured {offerSnapshotDate}, not a live Spectrum feed. Pricing and availability vary by location and eligibility. Check spectrum.com for current terms.</p>
-        </div>
-      </section>
-      <section className="bank-compare page-width" id="bank-compare"><div><span className="eyebrow eyebrow-red">MAKE IT YOURS</span><h2>More ways to make the most of your plan.</h2><p>Explore bundle savings, mobile savings and business options.</p></div><div className="bank-compare-visual"><PerksHeroArt compact /><div className="bank-compare-callout"><span>SPECTRUM PERKS</span><strong>More value for the way you connect.</strong></div></div></section>
-      <section className="bank-security" id="bank-security"><div className="page-width bank-security-inner"><div><span className="eyebrow">YOUR SECURITY MATTERS</span><h2>Confidence comes<br />with connection.</h2><p>Account alerts, usage monitoring and multi-factor authentication help protect your information.</p><ul><li><Icon name="check" size={16} />Configurable account alerts</li><li><Icon name="check" size={16} />Suspicious activity notifications</li><li><Icon name="check" size={16} />Multi-factor authentication</li></ul></div><div className="bank-security-art"><PerksHeroArt compact /><div className="bank-security-notice"><span><Icon name="shield" size={18} /></span><div><strong>Your account, protected</strong><small>Keep your sign-in details private</small></div></div></div></div></section>
-      <section className="bank-bottom-cta"><span className="eyebrow eyebrow-red">SPECTRUM PERKS</span><h2>Ready to get more from<br />your everyday?</h2><button className="button-primary" onClick={() => document.getElementById('bank-cards')?.scrollIntoView({ behavior: 'smooth' })}>Find your perk <Icon name="arrow" size={16} /></button><p>This demo page is informational; applications and account servicing are not connected.</p></section>
-    </div>
-  </>
-}
-
-function PerksHeroArt({ compact = false }: { compact?: boolean }) {
-  return <div className={`bank-hero-art ${compact ? 'bank-hero-art-compact' : ''}`} role="img" aria-label="Illustration of Spectrum Perks savings">
-    <div className="bank-art-orbit bank-art-orbit-one" /><div className="bank-art-orbit bank-art-orbit-two" />
-    <div className="bank-art-sun" /><div className="bank-art-land bank-art-land-back" /><div className="bank-art-land bank-art-land-front" />
-    {!compact && <><span className="bank-art-star bank-art-star-one">✳</span><span className="bank-art-star bank-art-star-two">✦</span><div className="bank-art-cashback"><small>SPECTRUM PERKS</small><strong>More value.</strong><span>on the things you love</span></div></>}
-    <div className="bank-art-card"><span>SPECTRUM <b>PERKS</b></span><i /><strong>no contracts</strong><small>BUNDLE &amp; SAVE</small><em><i /><i /></em></div>
-  </div>
-}
-
 function NetworkIllustration({ variant, className = '' }: { variant: 'home' | 'app' | 'door' | 'camera' | 'sensors' | 'tv' | 'support'; className?: string }) {
   const labels = {
     home: 'Illustration of a comfortable home with connected WiFi devices',
@@ -1248,7 +1246,7 @@ function AccountPage({ signedIn, email, setEmail, onSignIn, onChat }: { signedIn
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   function submit(event: FormEvent) { event.preventDefault(); onSignIn() }
-  return <section className="account-page"><div className="account-panel"><button className="account-wordmark" aria-label="Spectrum"><SpectrumLogo className="spectrum-logo-red" /></button>{signedIn ? <div className="account-welcome"><span className="account-success"><Icon name="check" size={24} /></span><span className="eyebrow eyebrow-red">MYSPECTRUM</span><h1>You’re in,<br /><em>welcome back.</em></h1><p>Your connected life, all in one place.</p><div className="account-summary"><div><span>Account</span><strong>{email || 'Customer account'}</strong></div><div><span>Services</span><strong>Mobile · Internet</strong></div><div><span>Amount due</span><strong>$126.40</strong></div></div><button className="button-primary" onClick={onChat}>Get help with your account <Icon name="arrow" size={15} /></button></div> : <><span className="eyebrow eyebrow-red">MYSPECTRUM</span><h1>Good to see<br /><em>you again.</em></h1><p>Sign in to manage your services, check your usage, pay your bill and more.</p><form className="signin-form" onSubmit={submit}><label htmlFor="signin-email">Username or email</label><input id="signin-email" type="text" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Enter your username or email" required /><label htmlFor="signin-password">Password</label><div className="password-field"><input id="signin-password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" required /><button type="button" onClick={() => setShowPassword(!showPassword)}>{showPassword ? 'Hide' : 'Show'}</button></div><button className="button-primary signin-button">Sign in <Icon name="arrow" size={16} /></button></form><div className="signin-help"><button>Forgot username?</button><span>·</span><button>Forgot password?</button></div><div className="create-account">New to My Spectrum App? <button onClick={() => setEmail('')}>Create an account <Icon name="arrow" size={14} /></button></div></>}</div><div className="account-side"><span className="account-side-glow" /><div className="account-side-content"><span className="eyebrow">YOUR SPECTRUM LIFE, TOGETHER</span><h2>Everything you need,<br /><em>right where you need it.</em></h2><p>One simple place to stay on top of your services, your way.</p><div className="account-feature"><Icon name="phone" /><span><strong>Manage your services</strong><small>See your Spectrum services at a glance.</small></span></div><div className="account-feature"><Icon name="cart" /><span><strong>Stay on top of your bill</strong><small>Review, pay and manage your account.</small></span></div><div className="account-feature"><Icon name="spark" /><span><strong>Get help when it matters</strong><small>Find answers and support, all in one place.</small></span></div></div></div></section>
+  return <section className="account-page"><div className="account-panel"><button className="account-wordmark" aria-label="Spectrum"><SpectrumLogo /></button>{signedIn ? <div className="account-welcome"><span className="account-success"><Icon name="check" size={24} /></span><span className="eyebrow eyebrow-red">MYSPECTRUM</span><h1>You’re in,<br /><em>welcome back.</em></h1><p>Your connected life, all in one place.</p><div className="account-summary"><div><span>Account</span><strong>{email || 'Customer account'}</strong></div><div><span>Services</span><strong>Mobile · Internet</strong></div><div><span>Amount due</span><strong>$126.40</strong></div></div><button className="button-primary" onClick={onChat}>Get help with your account <Icon name="arrow" size={15} /></button></div> : <><span className="eyebrow eyebrow-red">MYSPECTRUM</span><h1>Good to see<br /><em>you again.</em></h1><p>Sign in to manage your services, check your usage, pay your bill and more.</p><form className="signin-form" onSubmit={submit}><label htmlFor="signin-email">Username or email</label><input id="signin-email" type="text" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Enter your username or email" required /><label htmlFor="signin-password">Password</label><div className="password-field"><input id="signin-password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" required /><button type="button" onClick={() => setShowPassword(!showPassword)}>{showPassword ? 'Hide' : 'Show'}</button></div><button className="button-primary signin-button">Sign in <Icon name="arrow" size={16} /></button></form><div className="signin-help"><button>Forgot username?</button><span>·</span><button>Forgot password?</button></div><div className="create-account">New to My Spectrum App? <button onClick={() => setEmail('')}>Create an account <Icon name="arrow" size={14} /></button></div></>}</div><div className="account-side"><span className="account-side-glow" /><div className="account-side-content"><span className="eyebrow">YOUR SPECTRUM LIFE, TOGETHER</span><h2>Everything you need,<br /><em>right where you need it.</em></h2><p>One simple place to stay on top of your services, your way.</p><div className="account-feature"><Icon name="phone" /><span><strong>Manage your services</strong><small>See your Spectrum services at a glance.</small></span></div><div className="account-feature"><Icon name="cart" /><span><strong>Stay on top of your bill</strong><small>Review, pay and manage your account.</small></span></div><div className="account-feature"><Icon name="spark" /><span><strong>Get help when it matters</strong><small>Find answers and support, all in one place.</small></span></div></div></div></section>
 }
 
 function CartPage({ count, label, monthlyPrice, onNavigate, onRemove }: { count: number; label: string; monthlyPrice: number | null; onNavigate: (page: Page) => void; onRemove: () => void }) {
