@@ -71,11 +71,11 @@ function buildBillComparison(journey: BillJourneyState, analysis: ImageAnalysis,
   return { provider: journey.provider ?? analysis.provider ?? 'your current provider', currentMonthly, spectrumMonthly, annualSavings, planLabel: estimate?.planLabel ?? null, planMonthly: estimate?.planMonthly ?? null, deviceMonthly: estimate?.deviceMonthly ?? null, deviceLabel: estimate?.deviceLabel ?? null, currentPhone: phone?.hasDevice ? phone.model : null, phoneAssumed: estimate?.closestMatch ?? false }
 }
 
-type ChrisMessage = ChatMessage & { imageDataUrl?: string; imageAnalysis?: ImageAnalysis; imageAnalysisType?: ImageAnalysisType; billComparison?: BillComparison }
+type SpectraMessage = ChatMessage & { imageDataUrl?: string; imageAnalysis?: ImageAnalysis; imageAnalysisType?: ImageAnalysisType; billComparison?: BillComparison }
 
-const initialMessages: ChrisMessage[] = [{
+const initialMessages: SpectraMessage[] = [{
   role: 'assistant',
-  content: 'Hi, I’m Chris 👋 I can help you find a plan, choose a device, troubleshoot your internet and more. What can I help with?',
+  content: 'Hi, I’m Spectra 👋 I can help you find a plan, choose a device, troubleshoot your internet and more. What can I help with?',
 }]
 
 const commonRequests = [
@@ -92,12 +92,12 @@ function App() {
   const [cartCount, setCartCount] = useState(0)
   const [cartLabel, setCartLabel] = useState('Spectrum Mobile plan')
   const [cartMonthlyPrice, setCartMonthlyPrice] = useState<number | null>(50)
-  const [chrisOpen, setChrisOpen] = useState(false)
+  const [spectraOpen, setSpectraOpen] = useState(false)
   const [demoOpen, setDemoOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchText, setSearchText] = useState('')
   const [mobileMenu, setMobileMenu] = useState(false)
-  const [messages, setMessages] = useState<ChrisMessage[]>(initialMessages)
+  const [messages, setMessages] = useState<SpectraMessage[]>(initialMessages)
   const [customerProfile, setCustomerProfile] = useState<CustomerProfile>(emptyCustomerProfile)
   const [planJourneyStarted, setPlanJourneyStarted] = useState(false)
   const [completedJourneyQuestions, setCompletedJourneyQuestions] = useState<JourneyStage[]>([])
@@ -127,11 +127,11 @@ function App() {
   const chatEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!chrisOpen || !(azureCapabilities.speechInput || azureCapabilities.speechOutput)) return
+    if (!spectraOpen || !(azureCapabilities.speechInput || azureCapabilities.speechOutput)) return
     let active = true
     void isSpeechAvailable().then((ok) => { if (active) setSpeechReady(ok) })
     return () => { active = false }
-  }, [chrisOpen])
+  }, [spectraOpen])
   useEffect(() => {
     if (!readAloud) {
       stopSpeaking()
@@ -154,11 +154,11 @@ function App() {
     spokenCount.current = messages.length
   }, [messages, readAloud])
   useEffect(() => {
-    if (!chrisOpen && voiceMode) setVoiceMode(false)
-    if (!chrisOpen) stopSpeaking()
-  }, [chrisOpen, voiceMode])
+    if (!spectraOpen && voiceMode) setVoiceMode(false)
+    if (!spectraOpen) stopSpeaking()
+  }, [spectraOpen, voiceMode])
   useEffect(() => {
-    if (!voiceMode || !chrisOpen || sending || speaking || speakingRef.current) return
+    if (!voiceMode || !spectraOpen || sending || speaking || speakingRef.current) return
     let cancelled = false
     setListening(true)
     setChatError('')
@@ -184,7 +184,7 @@ function App() {
       stopListening()
       setListening(false)
     }
-  }, [voiceMode, chrisOpen, sending, speaking, listenTick])
+  }, [voiceMode, spectraOpen, sending, speaking, listenTick])
   function toggleVoiceMode() {
     if (voiceMode) {
       setVoiceMode(false)
@@ -195,7 +195,7 @@ function App() {
   }  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, sending])
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }) }, [page])
   useEffect(() => {
-    if (troubleshooting) console.info(`[Chris troubleshooting] current stage: ${troubleshooting.stage}`, { issueType: troubleshooting.issueType, affectedRoom: troubleshooting.affectedRoom, completedSteps: troubleshooting.completedSteps.length })
+    if (troubleshooting) console.info(`[Spectra troubleshooting] current stage: ${troubleshooting.stage}`, { issueType: troubleshooting.issueType, affectedRoom: troubleshooting.affectedRoom, completedSteps: troubleshooting.completedSteps.length })
   }, [troubleshooting])
   useEffect(() => {
     if (!troubleshooting?.demoMode || troubleshooting.stage !== 'identify' || troubleshooting.customerResponses.length > 0) return
@@ -229,8 +229,8 @@ function App() {
       const message = (event as CustomEvent<string>).detail
       if (message) void submitMessage(undefined, message)
     }
-    window.addEventListener('chris-message', handleSuggestedMessage)
-    return () => window.removeEventListener('chris-message', handleSuggestedMessage)
+    window.addEventListener('spectra-message', handleSuggestedMessage)
+    return () => window.removeEventListener('spectra-message', handleSuggestedMessage)
   }, [messages, sending])
 
   function navigate(next: Page) {
@@ -242,7 +242,7 @@ function App() {
   function runBillJourney(kind: BillJourneyKind) {
     if (sending || imageAnalyzing) return
     setDemoOpen(false)
-    setChrisOpen(true)
+    setSpectraOpen(true)
     setTroubleshooting(null)
     setDeviceUpgrade(null)
     setExecutiveJourney(null)
@@ -354,7 +354,7 @@ function App() {
       }
       const changingMind = /\b(?:don't|do not|no longer|changed my mind|instead|rather|forget)\b/i.test(text)
       if (changingMind && deviceUpgrade && deviceUpgrade.stage !== 'recommendation' && isPlanJourneyRequest(text)) {
-        console.info('[Chris journey] switching from device upgrade to mobile plan')
+        console.info('[Spectra journey] switching from device upgrade to mobile plan')
         setDeviceUpgrade(null)
         setTroubleshooting(null)
         setExecutiveJourney(null)
@@ -370,7 +370,7 @@ function App() {
         return
       }
       if (changingMind && planJourneyStarted && isDeviceUpgradeRequest(text)) {
-        console.info('[Chris journey] switching from mobile plan to device upgrade')
+        console.info('[Spectra journey] switching from mobile plan to device upgrade')
         setPlanJourneyStarted(false)
         setCompletedJourneyQuestions([])
         setCurrentJourneyStage(null)
@@ -390,7 +390,7 @@ function App() {
       )
       const stepOptions = executiveJourney && !executiveJourney.complete ? currentDemoJourneyStep(executiveJourney)?.options ?? [] : []
       if (journeyActive && !isRelevantToJourney(text, stepOptions)) {
-        console.info('[Chris journey] off-topic message sent to GPT; journey state unchanged')
+        console.info('[Spectra journey] off-topic message sent to GPT; journey state unchanged')
         const reply = await askGpt(next, customerProfile)
         setMessages([...next, { role: 'assistant', content: reply }])
         setSending(false)
@@ -499,7 +499,7 @@ function App() {
 
   function runWalkthrough(prompt: string) {
     setDemoOpen(false)
-    setChrisOpen(true)
+    setSpectraOpen(true)
     submitMessage(undefined, prompt)
   }
 
@@ -523,7 +523,7 @@ function App() {
       { role: 'user', content: prompt },
       { role: 'assistant', content: `${demoJourneyOpening(journey)} ${currentDemoJourneyStep(journey)?.prompt ?? ''}`.trim() },
     ])
-    setChrisOpen(true)
+    setSpectraOpen(true)
   }
 
   function runDeviceUpgradeJourney() {
@@ -545,7 +545,7 @@ function App() {
       { role: 'user', content: 'I’m thinking about upgrading my phone. What should I consider?' },
       { role: 'assistant', content: deviceUpgradeQuestion(startedUpgrade.stage) },
     ])
-    setChrisOpen(true)
+    setSpectraOpen(true)
   }
 
   function runTroubleshootingDemo() {
@@ -560,7 +560,7 @@ function App() {
     activateTroubleshooting(nextTroubleshooting)
     setCustomerProfile(emptyCustomerProfile)
     setChatError('')
-    setChrisOpen(true)
+    setSpectraOpen(true)
   }
 
   function activateTroubleshooting(state: TroubleshootingState) {
@@ -585,13 +585,13 @@ function App() {
     const lines = customerProfile.lineCount ?? recommendation.lineCount
     const data = customerProfile.dataUsage ?? 60
     addToCart(`${recommendation.planName} — ${data} GB, ${lines} ${lines === 1 ? 'line' : 'lines'}`, recommendation.monthlyEstimate)
-    setChrisOpen(false)
+    setSpectraOpen(false)
   }
 
   function addUpgradeDeviceToCart(deviceName: string) {
     const product = productCards.find((item) => item.name === deviceName)
     addToCart(deviceName, product ? deviceMonthlyPrice(product) : null)
-    setChrisOpen(false)
+    setSpectraOpen(false)
   }
 
   return (
@@ -618,47 +618,47 @@ function App() {
 
       <main>
         {page === 'home' && <HomePage onNavigate={navigate} onAdd={addToCart} onDemo={() => setDemoOpen(true)} />}
-        {page === 'mobile' && <MobilePlansPage onAdd={addToCart} onChat={() => setChrisOpen(true)} onPhones={() => navigate('devices')} />}
-        {page === 'internet' && <CategoryPage category="internet" onAdd={addToCart} onChat={() => setChrisOpen(true)} />}
-        {page === 'tv' && <CategoryPage category="tv" onAdd={addToCart} onChat={() => setChrisOpen(true)} />}
-        {page === 'smartHome' && <HomeWifiPage onAdd={addToCart} onChat={() => setChrisOpen(true)} />}
-        {page === 'homePhone' && <CategoryPage category="homePhone" onAdd={addToCart} onChat={() => setChrisOpen(true)} />}
+        {page === 'mobile' && <MobilePlansPage onAdd={addToCart} onChat={() => setSpectraOpen(true)} onPhones={() => navigate('devices')} />}
+        {page === 'internet' && <CategoryPage category="internet" onAdd={addToCart} onChat={() => setSpectraOpen(true)} />}
+        {page === 'tv' && <CategoryPage category="tv" onAdd={addToCart} onChat={() => setSpectraOpen(true)} />}
+        {page === 'smartHome' && <HomeWifiPage onAdd={addToCart} onChat={() => setSpectraOpen(true)} />}
+        {page === 'homePhone' && <CategoryPage category="homePhone" onAdd={addToCart} onChat={() => setSpectraOpen(true)} />}
         {page === 'devices' && <DevicesPage onAdd={addToCart} />}
-        {page === 'architecture' && <ArchitecturePage onChat={() => setChrisOpen(true)} />}
+        {page === 'architecture' && <ArchitecturePage onChat={() => setSpectraOpen(true)} />}
         {page === 'bank' && <SpectrumPerksPage />}
         {page === 'about' && <AboutSpectrumPage onNavigate={navigate} />}
-        {page === 'support' && <SupportPage onNavigate={navigate} onChat={() => setChrisOpen(true)} />}
-        {page === 'account' && <AccountPage signedIn={signedIn} email={email} setEmail={setEmail} onSignIn={() => setSignedIn(true)} onChat={() => setChrisOpen(true)} />}
+        {page === 'support' && <SupportPage onNavigate={navigate} onChat={() => setSpectraOpen(true)} />}
+        {page === 'account' && <AccountPage signedIn={signedIn} email={email} setEmail={setEmail} onSignIn={() => setSignedIn(true)} onChat={() => setSpectraOpen(true)} />}
         {page === 'cart' && <CartPage count={cartCount} label={cartLabel} monthlyPrice={cartMonthlyPrice} onNavigate={navigate} onRemove={() => setCartCount(0)} />}
         {page === 'checkout' && <CheckoutPage step={checkoutStep} label={cartLabel} monthlyPrice={cartMonthlyPrice} setStep={(next) => setCheckoutStep(checkoutStep === 3 && next === 1 ? 4 : next)} />}
       </main>
 
       <Footer onNavigate={navigate} />
 
-      {!chrisOpen && <button className="chris-launcher" onClick={() => setChrisOpen(true)} aria-label="Chat with Chris, your AI assistant"><span className="chris-launcher-icon"><Icon name="spark" size={21} /></span><span>Chat with Chris</span><span className="online-dot" /></button>}
-      {chrisOpen && <aside className="chris-panel" aria-label="Chat with Chris" aria-modal="true" role="dialog">
-        <div className="chris-header">
-          <div className="chris-avatar"><Icon name="spark" size={22} /></div><div className="chris-heading"><strong>Chris</strong><span><i /> Your Spectrum assistant</span></div>
-          <button className="chat-reset" onClick={resetConversation} disabled={sending || imageAnalyzing} aria-label="Start a new conversation with Chris" title="Start a new conversation"><Icon name="reset" size={15} /><span>New chat</span></button>
-          <button className="panel-close" onClick={() => setChrisOpen(false)} aria-label="Close Chris chat"><Icon name="close" /></button>
+      {!spectraOpen && <button className="spectra-launcher" onClick={() => setSpectraOpen(true)} aria-label="Chat with Spectra, your AI assistant"><span className="spectra-launcher-icon"><Icon name="spark" size={21} /></span><span>Chat with Spectra</span><span className="online-dot" /></button>}
+      {spectraOpen && <aside className="spectra-panel" aria-label="Chat with Spectra" aria-modal="true" role="dialog">
+        <div className="spectra-header">
+          <div className="spectra-avatar"><Icon name="spark" size={22} /></div><div className="spectra-heading"><strong>Spectra</strong><span><i /> Your Spectrum assistant</span></div>
+          <button className="chat-reset" onClick={resetConversation} disabled={sending || imageAnalyzing} aria-label="Start a new conversation with Spectra" title="Start a new conversation"><Icon name="reset" size={15} /><span>New chat</span></button>
+          <button className="panel-close" onClick={() => setSpectraOpen(false)} aria-label="Close Spectra chat"><Icon name="close" /></button>
         </div>
-        <div className="chris-context"><Icon name="shield" size={14} /> Helpful answers, here whenever you need them</div>
+        <div className="spectra-context"><Icon name="shield" size={14} /> Helpful answers, here whenever you need them</div>
         <div className="chat-messages" aria-live="polite">
-          {messages.map((message, index) => <div key={`${index}-${message.role}`} className={`chat-message ${message.role === 'user' ? 'chat-user' : 'chat-assistant'}`}>{message.role === 'assistant' && <span className="tiny-chris"><Icon name="spark" size={13} /></span>}<div className="chat-message-content"><p>{message.content}</p>{message.imageDataUrl && <img className="chat-image-attachment" src={message.imageDataUrl} alt={message.imageAnalysisType === 'bill' ? 'Customer-uploaded bill' : message.imageAnalysisType === 'tradeIn' ? 'Customer-uploaded trade-in phone' : 'Customer-uploaded modem or gateway'} />}{message.imageAnalysis && <ImageAnalysisCard analysis={message.imageAnalysis} analysisType={message.imageAnalysisType ?? 'modem'} comparison={message.billComparison} />}</div></div>)}
-          {(sending || imageAnalyzing) && <div className="typing-indicator" aria-label={imageAnalyzing ? "Chris is analyzing the image" : "Chris is typing"}><span /><span /><span /></div>}
+          {messages.map((message, index) => <div key={`${index}-${message.role}`} className={`chat-message ${message.role === 'user' ? 'chat-user' : 'chat-assistant'}`}>{message.role === 'assistant' && <span className="tiny-spectra"><Icon name="spark" size={13} /></span>}<div className="chat-message-content"><p>{message.content}</p>{message.imageDataUrl && <img className="chat-image-attachment" src={message.imageDataUrl} alt={message.imageAnalysisType === 'bill' ? 'Customer-uploaded bill' : message.imageAnalysisType === 'tradeIn' ? 'Customer-uploaded trade-in phone' : 'Customer-uploaded modem or gateway'} />}{message.imageAnalysis && <ImageAnalysisCard analysis={message.imageAnalysis} analysisType={message.imageAnalysisType ?? 'modem'} comparison={message.billComparison} />}</div></div>)}
+          {(sending || imageAnalyzing) && <div className="typing-indicator" aria-label={imageAnalyzing ? "Spectra is analyzing the image" : "Spectra is typing"}><span /><span /><span /></div>}
           {chatError && <div className="chat-error" role="alert">{chatError} {messages[messages.length - 1]?.imageDataUrl ? <button onClick={() => setChatError('')}>Dismiss</button> : <button onClick={() => submitMessage(undefined, messages[messages.length - 1]?.content || '')}>Try again</button>}</div>}
           <div ref={chatEndRef} />
         </div>
         {troubleshooting && <TroubleshootingExperience state={troubleshooting} onSelect={(answer) => submitMessage(undefined, answer)} onImage={analyzeJourneyImage} imageAnalyzing={imageAnalyzing} disabled={sending || imageAnalyzing} />}
         {billJourney && <BillJourneyPanel state={billJourney} onSelect={(answer) => submitMessage(undefined, answer)} onImage={analyzeJourneyImage} imageAnalyzing={imageAnalyzing} disabled={sending || imageAnalyzing} />}
         {planRecommendation && !troubleshooting && <RecommendationSummary profile={customerProfile} recommendation={planRecommendation} onAdd={() => addRecommendationToCart(planRecommendation)} />}
-        {deviceUpgrade && <DeviceUpgradePanel state={deviceUpgrade} onImage={analyzeJourneyImage} imageAnalyzing={imageAnalyzing} onSelect={(answer) => submitMessage(undefined, answer)} onAdd={() => deviceUpgrade.recommendation && addUpgradeDeviceToCart(deviceUpgrade.recommendation.name)} onBrowse={() => { setChrisOpen(false); navigate('devices') }} disabled={sending} />}
+        {deviceUpgrade && <DeviceUpgradePanel state={deviceUpgrade} onImage={analyzeJourneyImage} imageAnalyzing={imageAnalyzing} onSelect={(answer) => submitMessage(undefined, answer)} onAdd={() => deviceUpgrade.recommendation && addUpgradeDeviceToCart(deviceUpgrade.recommendation.name)} onBrowse={() => { setSpectraOpen(false); navigate('devices') }} disabled={sending} />}
         {executiveJourney && <ExecutiveJourneyPanel state={executiveJourney} onSelect={(answer) => submitMessage(undefined, answer)} disabled={sending} />}
         {messages.length === 1 && <div className="suggestion-chips"><span className="suggestion-heading">Popular requests</span>{commonRequests.map((request) => <button key={request.label} onClick={() => submitMessage(undefined, request.prompt)} disabled={sending}>{request.label} <Icon name="arrow" size={13} /></button>)}</div>}
         {messages.length === 1 && <button className="troubleshooting-demo-button" onClick={runTroubleshootingDemo} disabled={sending}><Icon name="play" size={14} /> Demo Walkthrough: bedroom WiFi fix</button>}
         {planJourneyStarted && currentJourneyStage && <JourneyQuickReplies stage={currentJourneyStage} onSelect={(answer) => submitMessage(undefined, answer)} disabled={sending} />}
-        <form className="chat-composer" onSubmit={(event) => submitMessage(event)}><input value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void submitMessage() } }} placeholder="Ask Chris anything..." aria-label="Message Chris" disabled={sending || imageAnalyzing} />{speechReady && azureCapabilities.speechInput && <button type="button" className={voiceMode ? 'voice-button is-active' : 'voice-button'} onClick={toggleVoiceMode} aria-label={voiceMode ? 'Stop listening' : 'Start voice conversation'} aria-pressed={voiceMode} title={voiceMode ? (listening ? 'Listening… click to stop' : 'Voice conversation on — click to stop') : 'Start voice conversation'}><Icon name="mic" size={17} /></button>}{speechReady && azureCapabilities.speechOutput && <button type="button" className={readAloud ? 'voice-button is-active' : 'voice-button'} onClick={() => setReadAloud(!readAloud)} aria-label="Read Chris's replies aloud" aria-pressed={readAloud}><Icon name="speaker" size={17} /></button>}<button type="submit" disabled={!input.trim() || sending || imageAnalyzing} aria-label="Send message"><Icon name="send" size={17} /></button></form>
-        <p className="chat-disclaimer">Chris uses AI and can make mistakes. Don’t share sensitive info.</p>
+        <form className="chat-composer" onSubmit={(event) => submitMessage(event)}><input value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void submitMessage() } }} placeholder="Ask Spectra anything..." aria-label="Message Spectra" disabled={sending || imageAnalyzing} />{speechReady && azureCapabilities.speechInput && <button type="button" className={voiceMode ? 'voice-button is-active' : 'voice-button'} onClick={toggleVoiceMode} aria-label={voiceMode ? 'Stop listening' : 'Start voice conversation'} aria-pressed={voiceMode} title={voiceMode ? (listening ? 'Listening… click to stop' : 'Voice conversation on — click to stop') : 'Start voice conversation'}><Icon name="mic" size={17} /></button>}{speechReady && azureCapabilities.speechOutput && <button type="button" className={readAloud ? 'voice-button is-active' : 'voice-button'} onClick={() => setReadAloud(!readAloud)} aria-label="Read Spectra's replies aloud" aria-pressed={readAloud}><Icon name="speaker" size={17} /></button>}<button type="submit" disabled={!input.trim() || sending || imageAnalyzing} aria-label="Send message"><Icon name="send" size={17} /></button></form>
+        <p className="chat-disclaimer">Spectra uses AI and can make mistakes. Don’t share sensitive info.</p>
       </aside>}
 
       {demoOpen && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setDemoOpen(false) }}><section className="demo-modal" role="dialog" aria-modal="true" aria-labelledby="demo-title"><div className="demo-modal-top"><span className="demo-kicker"><Icon name="spark" size={16} /> SPECTRUM EXPERIENCE STUDIO</span><button className="panel-close" onClick={() => setDemoOpen(false)} aria-label="Close executive demo"><Icon name="close" /></button></div><h2 id="demo-title">A more personal kind<br />of connection.</h2><p className="demo-intro">Explore how AI can make every customer moment feel more thoughtful. Choose a journey to begin.</p><div className="walkthrough-grid">{walkthroughs.map((item, index) => <button key={item.id} className="walkthrough-tile" onClick={() => item.id === 'upgrade' ? runDeviceUpgradeJourney() : item.id === 'sales' ? runWalkthrough(item.prompt) : item.id === 'care' ? runBillJourney('billing') : item.id === 'compare' ? runBillJourney('compare') : runExecutiveJourney(item.id as DemoJourneyId, item.prompt)}><span className="tile-icon"><Icon name={item.icon} size={19} /></span><span className="tile-number">0{index + 1}</span><strong>{item.title}</strong><small>{item.text}</small><span className="tile-arrow"><Icon name="arrow" size={16} /></span></button>)}</div><div className="demo-modal-foot"><span><i className="online-dot" /> Interactive preview</span><span>Powered by Spectrum AI</span></div></section></div>}
@@ -737,7 +737,7 @@ function BillJourneyPanel({ state, onSelect, onImage, imageAnalyzing, disabled }
   </section>
 }
 
-function BillComparisonCard({ comparison, services }: { comparison: NonNullable<ChrisMessage['billComparison']>; services: string[] }) {
+function BillComparisonCard({ comparison, services }: { comparison: NonNullable<SpectraMessage['billComparison']>; services: string[] }) {
   const shownServices = services.length ? services.join(', ') : 'services selected in the journey'
   const money = (value: number) => `$${value.toFixed(2)}`
   const spectrumLine = comparison.spectrumMonthly === null ? 'not enough service details to estimate' : `${money(comparison.spectrumMonthly)}/mo.`
@@ -749,7 +749,7 @@ function TradeInCard({ analysis }: { analysis: ImageAnalysis }) {
   return <section className="image-analysis-card" aria-label="Trade-in phone assessment"><strong>Trade-in assessment</strong><dl><div><dt>Phone</dt><dd>{analysis.deviceDescription ?? 'Not identified'}</dd></div><div><dt>Visible condition</dt><dd>{analysis.condition ?? 'unclear'}</dd></div><div><dt>Outlook</dt><dd>{outlook}</dd></div><div><dt>Confidence</dt><dd>{analysis.confidence}%</dd></div></dl>{analysis.damageFindings && analysis.damageFindings.length > 0 && <div className="bill-suggestions"><strong>Visible findings</strong><ul>{analysis.damageFindings.map((finding) => <li key={finding}>{finding}</li>)}</ul></div>}<p>{analysis.recommendedAction}</p><small>Based only on the photo. Not a trade-in quote; battery, function and eligibility are confirmed in a full device check.</small></section>
 }
 
-function ImageAnalysisCard({ analysis, analysisType, comparison }: { analysis: ImageAnalysis; analysisType: ImageAnalysisType; comparison?: ChrisMessage['billComparison'] }) {
+function ImageAnalysisCard({ analysis, analysisType, comparison }: { analysis: ImageAnalysis; analysisType: ImageAnalysisType; comparison?: SpectraMessage['billComparison'] }) {
   if (analysisType === 'tradeIn') return <TradeInCard analysis={analysis} />
   return <section className="image-analysis-card" aria-label={analysisType === 'bill' ? 'Bill analysis' : 'Modem image analysis'}><strong>{analysisType === 'bill' ? 'Bill review' : 'Visual troubleshooting'}</strong><dl><div><dt>Issue summary</dt><dd>{analysis.issueSummary}</dd></div><div><dt>Likely cause</dt><dd>{analysis.likelyRootCause}</dd></div><div><dt>Confidence</dt><dd>{analysis.confidence}%</dd></div><div><dt>Recommended next step</dt><dd>{analysis.recommendedAction}</dd></div></dl>{analysisType === 'bill' && <>{analysis.charges && analysis.charges.length > 0 && <div className="bill-charges"><strong>Visible charges</strong>{analysis.charges.map((charge, index) => <div key={`${index}-${charge.label}`}><span>{charge.label}</span><b>${charge.amount.toFixed(2)}</b></div>)}</div>}{analysis.suggestions && analysis.suggestions.length > 0 && <div className="bill-suggestions"><strong>Possible next steps</strong><ul>{analysis.suggestions.map((suggestion) => <li key={suggestion}>{suggestion}</li>)}</ul></div>}</>}{comparison && <BillComparisonCard comparison={comparison} services={analysis.services ?? []} /> }<small>{analysisType === 'bill' ? 'Based only on readable bill content. Amounts and recommendations may be incomplete; verify with your provider.' : 'Based only on what is visible in the image. Not a live network diagnostic.'}</small></section>
 }
@@ -866,7 +866,7 @@ function RecommendationSummary({ profile, recommendation, onAdd }: { profile: Cu
     ['Budget preference', profile.budgetPreference ?? 'Not shared'],
   ]
   return <section className="recommendation-summary" aria-label="Your mobile plan recommendation">
-    <div className="recommendation-summary-heading"><span><Icon name="spark" size={16} /></span><div><strong>Your plan recommendation</strong><small>Based on what you shared with Chris</small></div></div>
+    <div className="recommendation-summary-heading"><span><Icon name="spark" size={16} /></span><div><strong>Your plan recommendation</strong><small>Based on what you shared with Spectra</small></div></div>
     <div className="recommendation-summary-plan"><div><span>GOOD PLACE TO START</span><strong>{recommendation.planName}</strong></div><div className="recommendation-summary-price"><strong>${recommendation.monthlyEstimate}</strong><span>/mo.</span></div></div>
     <p className="recommendation-summary-reason">{recommendation.reason}</p>
     <p className="recommendation-summary-bundle">Pricing option: {recommendation.bundleName}. Price snapshot is illustrative; eligibility, taxes and current offers apply.</p>
@@ -986,7 +986,7 @@ function CategoryPage({ category, onAdd, onChat }: { category: keyof typeof cata
   return <>
     <div className="breadcrumbs page-width"><button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>Home</button><span>/</span><span>{item.title}</span></div>
     <section className={`category-hero ${color}`}><div className="page-width category-hero-inner"><div><span className="eyebrow">{category === 'mobile' ? 'SPECTRUM MOBILE' : category === 'internet' ? 'SPECTRUM' : category === 'tv' ? 'SPECTRUM TV' : 'MADE FOR HOME'}</span><h1>{item.title}<br /><em>{category === 'mobile' ? 'made for more.' : category === 'internet' ? 'made for real life.' : category === 'tv' ? 'made for your nights.' : 'made for home.'}</em></h1><p>{item.detail}</p><button className="button-primary" onClick={() => onAdd(item.label)}>{category === 'mobile' ? 'Explore plans' : 'Explore options'} <Icon name="arrow" size={16} /></button><small className="category-trust"><Icon name="shield" size={15} /> Backed by the Spectrum network</small></div><div className={`category-art category-art-${category}`} aria-hidden="true"><div className="category-art-glow" /><div className="category-art-ring ring-a" /><div className="category-art-ring ring-b" />{category === 'mobile' ? <div className="big-phone"><span className="phone-pill" /><span className="phone-clock">09:41</span><span className="phone-sun" /></div> : category === 'internet' ? <div className="wifi-device"><span /><span /><span /><i /></div> : category === 'tv' ? <div className="tv-device"><span className="tv-screen-glow"><Icon name="play" size={30} /></span><i /></div> : <div className="home-shape"><Icon name={category === 'smartHome' ? 'shield' : 'home'} size={68} /></div>}<span className="category-orbit-dot" /></div></div></section>
-    <div className="category-subnav page-width"><span>Explore {item.title.toLowerCase()}</span><button onClick={onChat}><Icon name="spark" size={15} /> Ask Chris</button><button onClick={() => window.scrollTo({ top: 690, behavior: 'smooth' })}>Plans & pricing <Icon name="chevron" size={14} /></button><button onClick={() => window.scrollTo({ top: 1080, behavior: 'smooth' })}>Why Spectrum <Icon name="chevron" size={14} /></button></div>
+    <div className="category-subnav page-width"><span>Explore {item.title.toLowerCase()}</span><button onClick={onChat}><Icon name="spark" size={15} /> Ask Spectra</button><button onClick={() => window.scrollTo({ top: 690, behavior: 'smooth' })}>Plans & pricing <Icon name="chevron" size={14} /></button><button onClick={() => window.scrollTo({ top: 1080, behavior: 'smooth' })}>Why Spectrum <Icon name="chevron" size={14} /></button></div>
     <section className="section-block page-width plan-section"><div className="section-heading"><div><span className="eyebrow eyebrow-red">A GOOD PLACE TO START</span><h2>{category === 'mobile' ? 'Find your kind of unlimited.' : category === 'internet' ? 'The right speed for your home.' : category === 'tv' ? 'Make TV yours.' : 'Simple options, more peace of mind.'}</h2><p>More ways to get the most out of your connection.</p></div><span className="pricing-note">Prices shown for eligible customers</span></div><div className="plan-grid">{[item, { ...item, label: category === 'mobile' ? 'Spectrum Mobile Extra' : `${item.label} Plus`, price: category === 'mobile' ? '$65' : category === 'internet' ? '$75' : category === 'tv' ? '$40' : '$35', features: [...item.features.slice(0, 2), category === 'mobile' ? 'More data for sharing' : 'More flexibility, your way'] }].map((plan, index) => <PlanCard key={plan.label} plan={plan} featured={index === 1} onAdd={() => onAdd(plan.label)} />)}</div><p className="legal-copy">All plans subject to eligibility, taxes, and applicable terms. Prices and availability may vary by location.</p></section>
     <section className="category-perks"><div className="page-width perks-inner"><div className="perks-heading"><span className="eyebrow eyebrow-red">A LITTLE MORE SPECTRUM</span><h2>Good things<br />come connected.</h2><p>From reliable network experiences to help when you need it, we’re here for your everyday.</p></div><div className="perks-list">{item.features.map((feature, index) => <div key={feature} className="perk-row"><span>0{index + 1}</span><Icon name={index === 0 ? 'globe' : index === 1 ? 'shield' : 'spark'} size={19} /><strong>{feature}</strong><Icon name="arrow" size={16} /></div>)}</div></div></section>
   </>
@@ -1018,7 +1018,7 @@ function MobilePlansPage({ onAdd, onChat, onPhones }: { onAdd: (label: string) =
     </section>
     <div className="mobile-plans-subnav page-width">
       <strong>Explore mobile plans</strong>
-      <button onClick={onChat}><Icon name="spark" size={15} /> Ask Chris</button>
+      <button onClick={onChat}><Icon name="spark" size={15} /> Ask Spectra</button>
       <button onClick={onPhones}>Shop phones <Icon name="arrow" size={14} /></button>
     </div>
     <section className="mobile-plans-content page-width">
@@ -1092,14 +1092,14 @@ function HomeWifiPage({ onAdd, onChat }: { onAdd: (label: string) => void; onCha
     <section className="security-benefits page-width" aria-label="Included WiFi features">
       {homeWifiOffer.benefits.map((benefit, index) => <div className="security-benefit" key={benefit}><span className="security-benefit-icon"><Icon name={index === 0 ? 'play' : index === 1 ? 'shield' : index === 2 ? 'home' : 'wifi'} size={20} /></span><strong>{benefit}</strong></div>)}
     </section>
-    <div className="security-subnav page-width"><strong>Feel good about your network.</strong><button onClick={onChat}><Icon name="spark" size={15} /> Ask Chris</button><button onClick={() => document.getElementById('security-features')?.scrollIntoView({ behavior: 'smooth' })}>Explore features <Icon name="chevron" size={14} /></button><button onClick={() => document.getElementById('security-plans')?.scrollIntoView({ behavior: 'smooth' })}>Plans &amp; setup <Icon name="chevron" size={14} /></button></div>
+    <div className="security-subnav page-width"><strong>Feel good about your network.</strong><button onClick={onChat}><Icon name="spark" size={15} /> Ask Spectra</button><button onClick={() => document.getElementById('security-features')?.scrollIntoView({ behavior: 'smooth' })}>Explore features <Icon name="chevron" size={14} /></button><button onClick={() => document.getElementById('security-plans')?.scrollIntoView({ behavior: 'smooth' })}>Plans &amp; setup <Icon name="chevron" size={14} /></button></div>
     <section className="security-feature-section" id="security-features">
       <div className="page-width">
         <div className="security-section-heading"><span className="eyebrow eyebrow-red">YOUR NETWORK, IN YOUR HANDS</span><h2>More peace of mind.<br /><em>One app.</em></h2><p>From checking connected devices to pausing WiFi for the kids, keep the things that matter close.</p></div>
         <div className="security-feature-list">
           {homeWifiOffer.features.map((feature, index) => <article className={`security-feature-row ${index % 2 ? 'security-feature-reverse' : ''}`} key={feature.title}>
             <NetworkIllustration variant={feature.art} className="security-feature-art" />
-            <div className="security-feature-copy"><span className="security-feature-number">0{index + 1} / HOME WIFI</span><h3>{feature.title}</h3><p>{feature.description}</p>{index === 0 && <button className="button-text-dark" onClick={onChat}>Ask Chris how it works <Icon name="arrow" size={15} /></button>}</div>
+            <div className="security-feature-copy"><span className="security-feature-number">0{index + 1} / HOME WIFI</span><h3>{feature.title}</h3><p>{feature.description}</p>{index === 0 && <button className="button-text-dark" onClick={onChat}>Ask Spectra how it works <Icon name="arrow" size={15} /></button>}</div>
           </article>)}
         </div>
       </div>
@@ -1109,14 +1109,14 @@ function HomeWifiPage({ onAdd, onChat }: { onAdd: (label: string) => void; onCha
         <div className="security-setup-heading"><span className="eyebrow eyebrow-red">UP AND RUNNING YOUR WAY</span><h2>Setup made easy.</h2><p>Choose the setup that works for your home. Get help whenever you need it.</p></div>
         <div className="security-setup-grid">
           <article className="security-setup-card"><div className="security-setup-art security-setup-self"><NetworkIllustration variant="app" /></div><div className="security-setup-copy"><span>OPTION 01</span><h3>Set it up yourself</h3><p>The My Spectrum App walks you through activation and router setup, with 24/7 tech support when you need it.</p><button className="button-text-dark" onClick={shopHomeWifi}>Choose Advanced WiFi <Icon name="arrow" size={15} /></button></div></article>
-          <article className="security-setup-card"><div className="security-setup-art security-setup-pro"><NetworkIllustration variant="support" /></div><div className="security-setup-copy"><span>OPTION 02</span><h3>Hire a pro</h3><p>Prefer an expert? Choose professional installation, no matter how many devices connect.</p><button className="button-text-dark" onClick={onChat}>Talk to Chris <Icon name="arrow" size={15} /></button></div></article>
+          <article className="security-setup-card"><div className="security-setup-art security-setup-pro"><NetworkIllustration variant="support" /></div><div className="security-setup-copy"><span>OPTION 02</span><h3>Hire a pro</h3><p>Prefer an expert? Choose professional installation, no matter how many devices connect.</p><button className="button-text-dark" onClick={onChat}>Talk to Spectra <Icon name="arrow" size={15} /></button></div></article>
         </div>
       </div>
     </section>
     <section className="security-offer-band">
       <div className="page-width security-offer-inner"><NetworkIllustration variant="sensors" className="security-offer-art" /><div><span className="eyebrow">ADVANCED WIFI &amp; INVINCIBLE WIFI</span><h2>Keep every device<br /><em>connected.</em></h2><p>{homeWifiOffer.priceNote}</p><button className="button-primary" onClick={shopHomeWifi}>Add Home WiFi <Icon name="arrow" size={16} /></button><small>Reference offer captured {offerSnapshotDate}. Price and availability may change.</small></div></div>
     </section>
-    <div className="security-support page-width"><span className="security-support-icon"><Icon name="phone" size={22} /></span><div><strong>Need a hand getting started?</strong><p>We’re here to help you find the right setup for your home.</p></div><button className="button-outline" onClick={onChat}>Chat with Chris <Icon name="spark" size={15} /></button></div>
+    <div className="security-support page-width"><span className="security-support-icon"><Icon name="phone" size={22} /></span><div><strong>Need a hand getting started?</strong><p>We’re here to help you find the right setup for your home.</p></div><button className="button-outline" onClick={onChat}>Chat with Spectra <Icon name="spark" size={15} /></button></div>
   </>
 }
 
@@ -1241,7 +1241,7 @@ function DevicesPage({ onAdd }: { onAdd: (label: string, monthlyPrice?: number |
 function SupportPage({ onNavigate, onChat }: { onNavigate: (page: Page) => void; onChat: () => void }) {
   const [topic, setTopic] = useState('')
   const topics = [{ label: 'Internet & WiFi', icon: 'wifi' as IconName, prompt: 'My internet is not working properly' }, { label: 'Billing & payments', icon: 'cart' as IconName, prompt: 'I need help understanding my bill' }, { label: 'Mobile & devices', icon: 'phone' as IconName, prompt: 'I need help with my mobile phone' }, { label: 'TV & streaming', icon: 'play' as IconName, prompt: 'I need help with my TV service' }, { label: 'Account & profile', icon: 'person' as IconName, prompt: 'I need help with my Spectrum account' }, { label: 'Moving services', icon: 'home' as IconName, prompt: 'I am moving and need to move my Spectrum services' }]
-  return <><section className="support-hero"><div className="page-width support-hero-inner"><div><span className="eyebrow">HERE WHEN YOU NEED US</span><h1>Let’s get you<br /><em>back to good.</em></h1><p>Find an answer, get step-by-step help or connect with someone who can help.</p><button className="support-search" onClick={() => setTopic('')}><Icon name="search" /><input aria-label="Search support" placeholder="Search for help with anything" value={topic} onChange={(event) => setTopic(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { onChat(); setTimeout(() => window.dispatchEvent(new CustomEvent('chris-message', { detail: topic })), 0) } }} /><Icon name="arrow" size={16} /></button></div><div className="support-visual"><div className="support-sun" /><div className="support-person"><i /><b /></div><span>WE’RE<br />HERE.</span><div className="support-orbit" /></div></div></section><section className="section-block page-width support-topics"><div className="section-heading"><div><span className="eyebrow eyebrow-red">HOW CAN WE HELP?</span><h2>Let’s start with what you need.</h2></div></div><div className="support-topic-grid">{topics.map((item) => <button key={item.label} onClick={() => { onChat(); setTimeout(() => window.dispatchEvent(new CustomEvent('chris-message', { detail: item.prompt })), 0) }}><span className="support-topic-icon"><Icon name={item.icon} size={20} /></span><strong>{item.label}</strong><Icon name="arrow" size={16} /></button>)}</div></section><section className="support-contact"><div className="page-width support-contact-inner"><div><span className="eyebrow eyebrow-red">A REAL PERSON IS HERE, TOO</span><h2>Let’s talk it through.</h2><p>Chris can help right now, or visit My Spectrum App for support with your account.</p></div><div className="support-contact-actions"><button className="button-primary" onClick={onChat}><Icon name="spark" size={16} /> Chat with Chris</button><button className="button-outline" onClick={() => onNavigate('account')}>Go to My Spectrum App <Icon name="arrow" size={15} /></button></div></div></section></>
+  return <><section className="support-hero"><div className="page-width support-hero-inner"><div><span className="eyebrow">HERE WHEN YOU NEED US</span><h1>Let’s get you<br /><em>back to good.</em></h1><p>Find an answer, get step-by-step help or connect with someone who can help.</p><button className="support-search" onClick={() => setTopic('')}><Icon name="search" /><input aria-label="Search support" placeholder="Search for help with anything" value={topic} onChange={(event) => setTopic(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { onChat(); setTimeout(() => window.dispatchEvent(new CustomEvent('spectra-message', { detail: topic })), 0) } }} /><Icon name="arrow" size={16} /></button></div><div className="support-visual"><div className="support-sun" /><div className="support-person"><i /><b /></div><span>WE’RE<br />HERE.</span><div className="support-orbit" /></div></div></section><section className="section-block page-width support-topics"><div className="section-heading"><div><span className="eyebrow eyebrow-red">HOW CAN WE HELP?</span><h2>Let’s start with what you need.</h2></div></div><div className="support-topic-grid">{topics.map((item) => <button key={item.label} onClick={() => { onChat(); setTimeout(() => window.dispatchEvent(new CustomEvent('spectra-message', { detail: item.prompt })), 0) }}><span className="support-topic-icon"><Icon name={item.icon} size={20} /></span><strong>{item.label}</strong><Icon name="arrow" size={16} /></button>)}</div></section><section className="support-contact"><div className="page-width support-contact-inner"><div><span className="eyebrow eyebrow-red">A REAL PERSON IS HERE, TOO</span><h2>Let’s talk it through.</h2><p>Spectra can help right now, or visit My Spectrum App for support with your account.</p></div><div className="support-contact-actions"><button className="button-primary" onClick={onChat}><Icon name="spark" size={16} /> Chat with Spectra</button><button className="button-outline" onClick={() => onNavigate('account')}>Go to My Spectrum App <Icon name="arrow" size={15} /></button></div></div></section></>
 }
 
 function AccountPage({ signedIn, email, setEmail, onSignIn, onChat }: { signedIn: boolean; email: string; setEmail: (email: string) => void; onSignIn: () => void; onChat: () => void }) {
@@ -1268,7 +1268,7 @@ function CartPage({ count, label, monthlyPrice, onNavigate, onRemove }: { count:
 function CheckoutPage({ step, label, monthlyPrice, setStep }: { step: number; label: string; monthlyPrice: number | null; setStep: (step: number) => void }) {
   const price = monthlyPrice === null ? 'To be confirmed' : `$${monthlyPrice.toFixed(2)}/mo.`
   if (step === 4) return <section className="checkout-page page-width"><div className="checkout-confirmation"><span className="account-success"><Icon name="check" size={24} /></span><span className="eyebrow eyebrow-red">DEMO ORDER COMPLETE</span><h1>You’re one step<br />closer to <em>connected.</em></h1><p>This interactive demo doesn’t place a real order. In a live Spectrum checkout, you’d receive a confirmation and next steps here.</p><button className="button-primary" onClick={() => setStep(1)}>Back to checkout <Icon name="arrow" size={15} /></button></div></section>
-  return <section className="checkout-page page-width"><div className="breadcrumbs"><button onClick={() => setStep(1)}>Your cart</button><span>/</span><span>Checkout</span></div><div className="checkout-heading"><span className="eyebrow eyebrow-red">A FEW MORE DETAILS</span><h1>Let’s make it <em>yours.</em></h1><p>We’ll guide you through the next steps. You can review everything before confirming.</p></div><div className="checkout-progress">{['Your details', 'Choose your plan', 'Review & confirm'].map((stepLabel, index) => <button key={stepLabel} className={step === index + 1 ? 'step-current' : step > index + 1 ? 'step-done' : ''} onClick={() => setStep(index + 1)}><span>{step > index + 1 ? <Icon name="check" size={14} /> : `0${index + 1}`}</span>{stepLabel}</button>)}</div><div className="checkout-layout"><div className="checkout-form-card"><span className="eyebrow eyebrow-red">STEP 0{step} OF 03</span><h2>{step === 1 ? 'Let’s start with you.' : step === 2 ? 'Your plan, your way.' : 'One last look.'}</h2><p>{step === 1 ? 'Tell us how to reach you. We’ll use this to help set up your Spectrum service.' : step === 2 ? 'Choose how you’d like to get started with Spectrum.' : 'Make sure everything looks right before you continue.'}</p>{step === 1 ? <form className="checkout-form" onSubmit={(event) => { event.preventDefault(); setStep(2) }}><label htmlFor="first-name">First name</label><input id="first-name" required placeholder="First name" /><label htmlFor="last-name">Last name</label><input id="last-name" required placeholder="Last name" /><label htmlFor="checkout-email">Email address</label><input id="checkout-email" type="email" required placeholder="you@example.com" /><label htmlFor="postal-code">Postal code</label><input id="postal-code" required maxLength={7} placeholder="A1A 1A1" /><button className="button-primary checkout-next">Continue <Icon name="arrow" size={15} /></button></form> : step === 2 ? <div className="checkout-options"><button className="checkout-choice selected-choice" onClick={(event) => event.currentTarget.classList.toggle('selected-choice')}><span className="choice-radio" /><span><strong>Bring your number to Spectrum</strong><small>Keep the number you already know and love.</small></span></button><button className="checkout-choice" onClick={(event) => event.currentTarget.classList.toggle('selected-choice')}><span className="choice-radio" /><span><strong>Get a new number</strong><small>We’ll help you find a new number when you activate.</small></span></button><button className="button-primary checkout-next" onClick={() => setStep(3)}>Continue <Icon name="arrow" size={15} /></button></div> : <><div className="review-line"><span>{label}</span><strong>{price}</strong></div><div className="review-line"><span>Selected offer</span><strong>Illustrative</strong></div><div className="review-note"><Icon name="shield" size={16} /> This is a demo; it doesn’t place a real order.</div><button className="button-primary checkout-next" onClick={() => setStep(1)}>Continue to secure activation <Icon name="arrow" size={15} /></button></>}</div><aside className="checkout-summary"><span className="eyebrow eyebrow-red">YOUR SELECTION</span><h3>{label}</h3><p>Based on the plan you selected with Chris.</p><div className="summary-total"><span>Monthly plan</span><strong>{price}</strong></div><small>Plus taxes and applicable fees. This demo does not place an order.</small></aside></div></section>
+  return <section className="checkout-page page-width"><div className="breadcrumbs"><button onClick={() => setStep(1)}>Your cart</button><span>/</span><span>Checkout</span></div><div className="checkout-heading"><span className="eyebrow eyebrow-red">A FEW MORE DETAILS</span><h1>Let’s make it <em>yours.</em></h1><p>We’ll guide you through the next steps. You can review everything before confirming.</p></div><div className="checkout-progress">{['Your details', 'Choose your plan', 'Review & confirm'].map((stepLabel, index) => <button key={stepLabel} className={step === index + 1 ? 'step-current' : step > index + 1 ? 'step-done' : ''} onClick={() => setStep(index + 1)}><span>{step > index + 1 ? <Icon name="check" size={14} /> : `0${index + 1}`}</span>{stepLabel}</button>)}</div><div className="checkout-layout"><div className="checkout-form-card"><span className="eyebrow eyebrow-red">STEP 0{step} OF 03</span><h2>{step === 1 ? 'Let’s start with you.' : step === 2 ? 'Your plan, your way.' : 'One last look.'}</h2><p>{step === 1 ? 'Tell us how to reach you. We’ll use this to help set up your Spectrum service.' : step === 2 ? 'Choose how you’d like to get started with Spectrum.' : 'Make sure everything looks right before you continue.'}</p>{step === 1 ? <form className="checkout-form" onSubmit={(event) => { event.preventDefault(); setStep(2) }}><label htmlFor="first-name">First name</label><input id="first-name" required placeholder="First name" /><label htmlFor="last-name">Last name</label><input id="last-name" required placeholder="Last name" /><label htmlFor="checkout-email">Email address</label><input id="checkout-email" type="email" required placeholder="you@example.com" /><label htmlFor="postal-code">Postal code</label><input id="postal-code" required maxLength={7} placeholder="A1A 1A1" /><button className="button-primary checkout-next">Continue <Icon name="arrow" size={15} /></button></form> : step === 2 ? <div className="checkout-options"><button className="checkout-choice selected-choice" onClick={(event) => event.currentTarget.classList.toggle('selected-choice')}><span className="choice-radio" /><span><strong>Bring your number to Spectrum</strong><small>Keep the number you already know and love.</small></span></button><button className="checkout-choice" onClick={(event) => event.currentTarget.classList.toggle('selected-choice')}><span className="choice-radio" /><span><strong>Get a new number</strong><small>We’ll help you find a new number when you activate.</small></span></button><button className="button-primary checkout-next" onClick={() => setStep(3)}>Continue <Icon name="arrow" size={15} /></button></div> : <><div className="review-line"><span>{label}</span><strong>{price}</strong></div><div className="review-line"><span>Selected offer</span><strong>Illustrative</strong></div><div className="review-note"><Icon name="shield" size={16} /> This is a demo; it doesn’t place a real order.</div><button className="button-primary checkout-next" onClick={() => setStep(1)}>Continue to secure activation <Icon name="arrow" size={15} /></button></>}</div><aside className="checkout-summary"><span className="eyebrow eyebrow-red">YOUR SELECTION</span><h3>{label}</h3><p>Based on the plan you selected with Spectra.</p><div className="summary-total"><span>Monthly plan</span><strong>{price}</strong></div><small>Plus taxes and applicable fees. This demo does not place an order.</small></aside></div></section>
 }
 
 function Footer({ onNavigate }: { onNavigate: (page: Page) => void }) {

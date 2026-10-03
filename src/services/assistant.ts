@@ -113,7 +113,7 @@ export async function sendMessage(
     }
     const done = journeyOrder.filter((stage) => completed.has(stage))
     const nextStage = journeyOrder.find((stage) => !completed.has(stage)) ?? null
-    console.info(`[Chris journey] current stage: ${nextStage ?? 'recommendation'}`, { completedQuestions: done })
+    console.info(`[Spectra journey] current stage: ${nextStage ?? 'recommendation'}`, { completedQuestions: done })
     if (nextStage) {
       return {
         reply: journeyStarted
@@ -147,11 +147,11 @@ export async function askGpt(messages: ChatMessage[], profile: CustomerProfile):
   })
   const data: { reply?: string; error?: string } | null = response.status === 404 ? null : await response.json().catch(() => null)
   if (!data) {
-    console.warn('[Chris Debug] /api/chat unavailable or not JSON', { status: response.status, contentType: response.headers.get('content-type') })
-    throw new Error('Chris’s service is not reachable right now. Please try again shortly.')
+    console.warn('[Spectra Debug] /api/chat unavailable or not JSON', { status: response.status, contentType: response.headers.get('content-type') })
+    throw new Error('Spectra’s service is not reachable right now. Please try again shortly.')
   }
-  if (!response.ok) throw new Error(data.error || 'Chris could not reply just now.')
-  if (!data.reply) throw new Error('Chris sent an empty reply. Please try again.')
+  if (!response.ok) throw new Error(data.error || 'Spectra could not reply just now.')
+  if (!data.reply) throw new Error('Spectra sent an empty reply. Please try again.')
   return data.reply
 }
 

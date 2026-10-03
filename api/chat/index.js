@@ -1,6 +1,6 @@
 const config = require('../config')
 
-const systemPrompt = `You are Chris, Spectrum's friendly, knowledgeable customer experience assistant.
+const systemPrompt = `You are Spectra, Spectrum's friendly, knowledgeable customer experience assistant.
 Help with mobile and home internet plans, device upgrades, roaming, billing, TV and streaming,
 smart home, home phone, promotions, troubleshooting, and account support. Be concise, warm, and
 clear. Never claim to access private account details or perform an account action. Ask a focused
@@ -56,14 +56,14 @@ module.exports = async function (context, req) {
     if (!response.ok) {
       const azureError = await response.text()
       context.log.error(`Azure OpenAI request failed (${response.status}).`)
-      context.res = { headers: jsonHeaders, status: 502, body: { error: 'Chris is temporarily unavailable. Please try again.', debug: { azureStatus: response.status, azureBody: azureError } } }
+      context.res = { headers: jsonHeaders, status: 502, body: { error: 'Spectra is temporarily unavailable. Please try again.', debug: { azureStatus: response.status, azureBody: azureError } } }
       return
     }
     const data = await response.json()
     context.res = { headers: jsonHeaders, status: 200, body: { reply: data.choices?.[0]?.message?.content || '' } }
   } catch (error) {
     context.log.error('Azure OpenAI request failed.', error)
-    context.res = { headers: jsonHeaders, status: 502, body: { error: 'Chris is temporarily unavailable. Please try again.' } }
+    context.res = { headers: jsonHeaders, status: 502, body: { error: 'Spectra is temporarily unavailable. Please try again.' } }
   }
 }
 

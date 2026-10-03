@@ -12,11 +12,11 @@ const statusLabel: Record<Status, string> = {
 const layers: Layer[] = [
   {
     title: '1. Customer channels',
-    summary: 'Where customers meet Chris.',
+    summary: 'Where customers meet Spectra.',
     components: [
       { name: 'Responsive web storefront', detail: 'React + TypeScript site with shop, support and account journeys.', status: 'live' },
-      { name: 'Chris chat panel', detail: 'Persistent assistant with guided journeys, quick replies and hands-free voice.', status: 'live' },
-      { name: 'Native app, IVR and in-store tools', detail: 'Same Chris orchestration reused across My Spectrum App app, contact centre and retail.', status: 'future' },
+      { name: 'Spectra chat panel', detail: 'Persistent assistant with guided journeys, quick replies and hands-free voice.', status: 'live' },
+      { name: 'Native app, IVR and in-store tools', detail: 'Same Spectra orchestration reused across My Spectrum App app, contact centre and retail.', status: 'future' },
     ],
   },
   {
@@ -29,7 +29,7 @@ const layers: Layer[] = [
     ],
   },
   {
-    title: '3. Chris orchestration',
+    title: '3. Spectra orchestration',
     summary: 'Decides what the customer needs and which tools and data to use.',
     components: [
       { name: 'Guided journey engine', detail: 'Plan, upgrade, trade-in, roaming, troubleshooting, bill review and competitor comparison state machines.', status: 'live' },
@@ -53,7 +53,7 @@ const layers: Layer[] = [
   },
   {
     title: '5. Data and knowledge',
-    summary: 'What Chris knows and remembers.',
+    summary: 'What Spectra knows and remembers.',
     components: [
       { name: 'Spectrum phone pricing snapshot', detail: 'Static JSON captured from the public catalogue, refreshed by a script.', status: 'mock' },
       { name: 'Offer and plan service layer', detail: 'Typed service ready to swap for a live promotions and pricing feed.', status: 'mock' },
@@ -64,9 +64,9 @@ const layers: Layer[] = [
   },
   {
     title: '6. Integration layer to Spectrum OSS / BSS',
-    summary: 'Chris can only act on a real account through these systems. None are connected in this demo.',
+    summary: 'Spectra can only act on a real account through these systems. None are connected in this demo.',
     components: [
-      { name: 'Billing and rating', detail: 'Invoices, charges, credits, payments and usage so Chris can explain a real bill.', status: 'future' },
+      { name: 'Billing and rating', detail: 'Invoices, charges, credits, payments and usage so Spectra can explain a real bill.', status: 'future' },
       { name: 'CRM and customer master', detail: 'Profile, entitlements, households, consent and case history.', status: 'future' },
       { name: 'Order management and provisioning', detail: 'Plan changes, device orders, SIM and eSIM activation, roaming add-ons.', status: 'future' },
       { name: 'Product catalogue and eligibility', detail: 'Plans, bundles, upgrade eligibility, device financing and trade-in values.', status: 'future' },
@@ -90,7 +90,7 @@ const layers: Layer[] = [
 
 const demoFlow = [
   { label: 'Customer', status: 'live' as Status },
-  { label: 'Web + Chris panel', status: 'live' as Status },
+  { label: 'Web + Spectra panel', status: 'live' as Status },
   { label: 'Static Web Apps + Functions', status: 'live' as Status },
   { label: 'Azure AI Foundry GPT-4.1-mini / Speech', status: 'live' as Status },
 ]
@@ -99,7 +99,7 @@ const productionFlow = [
   { label: 'Customer', status: 'live' as Status },
   { label: 'Web, app, voice, store', status: 'live' as Status },
   { label: 'API gateway + identity', status: 'future' as Status },
-  { label: 'Chris orchestration + tools', status: 'future' as Status },
+  { label: 'Spectra orchestration + tools', status: 'future' as Status },
   { label: 'Foundry models + RAG', status: 'future' as Status },
   { label: 'OSS / BSS integrations', status: 'future' as Status },
 ]
@@ -121,8 +121,8 @@ export function ArchitecturePage({ onChat }: { onChat: () => void }) {
       <section className="arch-hero">
         <div className="page-width">
           <span className="eyebrow">SOLUTION ARCHITECTURE</span>
-          <h1>How Chris works in production — and what you’re seeing today</h1>
-          <p>Chris is a conversational layer on top of Spectrum’ digital channels. To go beyond answering questions and actually look up bills, change plans or arrange a technician, it needs grounded knowledge (RAG) and secure integrations into Spectrum’ OSS/BSS systems. This demo proves the experience, the AI and the voice; the grey blocks below are what a production build adds.</p>
+          <h1>How Spectra works in production — and what you’re seeing today</h1>
+          <p>Spectra is a conversational layer on top of Spectrum’ digital channels. To go beyond answering questions and actually look up bills, change plans or arrange a technician, it needs grounded knowledge (RAG) and secure integrations into Spectrum’ OSS/BSS systems. This demo proves the experience, the AI and the voice; the grey blocks below are what a production build adds.</p>
           <div className="arch-legend" aria-label="Legend">
             {(['live', 'mock', 'future'] as Status[]).map((status) => <span className={`arch-chip arch-${status}`} key={status}>{statusLabel[status]} <b>{counts[status]}</b></span>)}
           </div>
@@ -130,7 +130,7 @@ export function ArchitecturePage({ onChat }: { onChat: () => void }) {
       </section>
 
       <section className="page-width arch-flows" aria-label="Demo and production request flow">
-        <Flow title="Built for this demo" steps={demoFlow} note="Chris answers from GPT-4.1-mini and guided journeys. Plans, prices and accounts are reference data; nothing is read from or written to Spectrum systems." />
+        <Flow title="Built for this demo" steps={demoFlow} note="Spectra answers from GPT-4.1-mini and guided journeys. Plans, prices and accounts are reference data; nothing is read from or written to Spectrum systems." />
         <Flow title="Production target" steps={productionFlow} note="Every answer is grounded in Spectrum knowledge and every action is authorised, audited and executed through the OSS/BSS integration layer." />
       </section>
 
@@ -156,7 +156,7 @@ export function ArchitecturePage({ onChat }: { onChat: () => void }) {
           <h2>What’s needed to move from demo to production</h2>
           <p>Stand up the RAG knowledge index, connect billing, CRM, provisioning and catalogue APIs behind an API gateway, add customer identity, and put safety, monitoring and human hand-off around the model.</p>
         </div>
-        <button className="button-primary" onClick={onChat}>Talk to Chris</button>
+        <button className="button-primary" onClick={onChat}>Talk to Spectra</button>
       </section>
     </div>
   )

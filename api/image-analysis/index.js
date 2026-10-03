@@ -54,7 +54,7 @@ module.exports = async function (context, req) {
       headers: { 'Content-Type': 'application/json', 'api-key': config.azureOpenAIAPIKey },
       body: JSON.stringify({
         messages: [
-          { role: 'system', content: `You are Chris, a careful ${assistantRoleByType[analysisType]} assistant. Analyze visible evidence only, protect privacy, never invent details, and return valid JSON only.` },
+          { role: 'system', content: `You are Spectra, a careful ${assistantRoleByType[analysisType]} assistant. Analyze visible evidence only, protect privacy, never invent details, and return valid JSON only.` },
           { role: 'user', content: [
             { type: 'text', text: promptByType[analysisType] },
             { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64}`, detail: 'high' } },

@@ -39,7 +39,7 @@ const journeys: Record<DemoJourneyId, DemoJourneyDefinition> = {
     steps: [
       { prompt: 'Which service are you interested in?', options: ['Mobile plan', 'New phone', 'Internet', 'TV & streaming', 'Home security'] },
       { prompt: 'What matters most in an offer?', options: ['Lowest monthly cost', 'More data or speed', 'A new device', 'Bundle and save'] },
-      { prompt: 'How would you like to continue?', options: ['See matching options', 'Compare plans and devices', 'Talk it through with Chris'] },
+      { prompt: 'How would you like to continue?', options: ['See matching options', 'Compare plans and devices', 'Talk it through with Spectra'] },
     ],
     completion: (answers) => `I’ve tailored this demo to ${answers[0]?.toLowerCase() ?? 'your service'} with a focus on ${answers[1]?.toLowerCase() ?? 'your priorities'}. ${answers[2] === 'Compare plans and devices' ? 'Use Mobile or Phones & Devices in the navigation to compare the catalog.' : 'I’ve highlighted the relevant Spectrum options for your next step.'} Offers shown in this demo are illustrative, not live or account-verified.`,
   },
