@@ -13,6 +13,7 @@ import aboutHeroImage from './assets/about-hero.png'
 import { beginTroubleshooting, completeDiagnostics, isModemImageShareRequest, isTroubleshootingRequest, recordTroubleshootingResponse, TroubleshootingState, troubleshootingReply } from './services/troubleshooting'
 import { advanceDeviceUpgrade, beginDeviceUpgrade, completeTradeIn, describeDeviceMatch, deviceMonthlyPrice, deviceUpgradeQuestion, DeviceUpgradeStage, DeviceUpgradeState, isDeviceUpgradeRequest, tradeInAssessmentReply } from './services/device-upgrade'
 import { answerDemoJourney, currentDemoJourneyStep, demoJourneyOpening, demoJourneyReprompt, isDemoAnswerAcceptable, DemoJourneyId, DemoJourneyState, startDemoJourney } from './services/demo-journeys'
+import { beginWifiUsageJourney, completeReply as wifiCompleteReply, confirmReply as wifiConfirmReply, declineReply as wifiDeclineReply, demoHousehold, findDevice as findWifiDevice, isApproval as isWifiApproval, isDecline as isWifiDecline, isPauseRequest as isWifiPauseRequest, isUsageRequest as isWifiUsageRequest, moveToConfirm as moveWifiToConfirm, rankByNightUsage, usageSummaryReply as wifiUsageSummaryReply, WifiJourneyState, WifiPauseSchedule } from './services/advanced-wifi'
 
 type Page = 'home' | 'mobile' | 'internet' | 'tv' | 'smartHome' | 'homePhone' | 'devices' | 'support' | 'account' | 'cart' | 'checkout' | 'about' | 'architecture'
 type IconName = 'search' | 'person' | 'cart' | 'chevron' | 'arrow' | 'close' | 'menu' | 'spark' | 'send' | 'reset' | 'wifi' | 'phone' | 'home' | 'play' | 'shield' | 'globe' | 'check' | 'mic' | 'speaker'
@@ -59,6 +60,7 @@ const walkthroughs = [
   { id: 'offers', title: 'Personalized Offers', text: 'See options that fit how you connect.', icon: 'spark' as IconName, prompt: 'Are there any promotions or offers that might suit me?' },
   { id: 'roaming', title: 'Roaming Advisor', text: 'Travel with more confidence and fewer surprises.', icon: 'globe' as IconName, prompt: 'I’m travelling soon. How does roaming work?' },
   { id: 'technical', title: 'Technical Support', text: 'Troubleshoot home WiFi, one step at a time.', icon: 'wifi' as IconName, prompt: 'My home internet has been slow. Can you help?' },
+  { id: 'wifi', title: 'Advanced WiFi & Device Controls', text: 'See which connected devices use the most data and manage their WiFi access.', icon: 'shield' as IconName, prompt: 'Which devices are using the most internet in my house?' },
   { id: 'compare', title: 'Compare with Competitors', text: 'See your estimated annual savings with Spectrum.', icon: 'shield' as IconName, prompt: 'Compare my current provider with Spectrum.' },
 ]
 
@@ -111,6 +113,8 @@ function App() {
   const [billJourney, setBillJourney] = useState<BillJourneyState | null>(null)
   const [deviceUpgrade, setDeviceUpgrade] = useState<DeviceUpgradeState | null>(null)
   const [executiveJourney, setExecutiveJourney] = useState<DemoJourneyState | null>(null)
+  const [wifiJourney, setWifiJourney] = useState<WifiJourneyState | null>(null)
+  const [wifiSchedules, setWifiSchedules] = useState<Record<string, WifiPauseSchedule>>({})
   const [input, setInput] = useState('')
   const [speechReady, setSpeechReady] = useState(false)
   const [listening, setListening] = useState(false)
@@ -249,6 +253,7 @@ function App() {
     setTroubleshooting(null)
     setDeviceUpgrade(null)
     setExecutiveJourney(null)
+    setWifiJourney(null)
     setPlanJourneyStarted(false)
     setCompletedJourneyQuestions([])
     setCurrentJourneyStage(null)
@@ -326,6 +331,7 @@ function App() {
         setTroubleshooting(null)
         setDeviceUpgrade(null)
         setExecutiveJourney(null)
+        setWifiJourney(null)
         setPlanJourneyStarted(false)
         setCompletedJourneyQuestions([])
         setCurrentJourneyStage(null)
@@ -355,12 +361,57 @@ function App() {
         setMessages([...next, { role: 'assistant', content: 'Yes—you can share a clear photo of your modem or gateway. Use Take a photo or Upload an image below, and I’ll check the visible lights, connections, and error indicators.' }])
         return
       }
+      if (wifiJourney && wifiJourney.stage === 'confirm') {
+        if (isWifiApproval(text)) {
+          setWifiSchedules((current) => ({ ...current, [wifiJourney.schedule.deviceId]: wifiJourney.schedule }))
+          const done: WifiJourneyState = { ...wifiJourney, stage: 'done' }
+          setWifiJourney(done)
+          setMessages([...next, { role: 'assistant', content: wifiCompleteReply(done) }])
+          setSending(false)
+          return
+        }
+        if (isWifiDecline(text)) {
+          setMessages([...next, { role: 'assistant', content: wifiDeclineReply(wifiJourney) }])
+          setWifiJourney(null)
+          setSending(false)
+          return
+        }
+      }
+      if (wifiJourney && wifiJourney.stage === 'usage' && (isWifiPauseRequest(text) || isWifiApproval(text))) {
+        const updated = moveWifiToConfirm(wifiJourney)
+        setWifiJourney(updated)
+        setMessages([...next, { role: 'assistant', content: wifiConfirmReply(updated) }])
+        setSending(false)
+        return
+      }
+      if (isWifiUsageRequest(text)) {
+        if (!signedIn) {
+          setMessages([...next, { role: 'assistant', content: 'I can show your connected devices and usage once you’re signed in to My Spectrum App. Want me to take you to sign in?' }])
+          setSending(false)
+          return
+        }
+        setBillJourney(null)
+        setTroubleshooting(null)
+        setDeviceUpgrade(null)
+        setExecutiveJourney(null)
+        setWifiJourney(null)
+        setPlanJourneyStarted(false)
+        setCompletedJourneyQuestions([])
+        setCurrentJourneyStage(null)
+        setPlanRecommendation(undefined)
+        const started = beginWifiUsageJourney()
+        setWifiJourney(started)
+        setMessages([...next, { role: 'assistant', content: wifiUsageSummaryReply() }])
+        setSending(false)
+        return
+      }
       const changingMind = /\b(?:don't|do not|no longer|changed my mind|instead|rather|forget)\b/i.test(text)
       if (changingMind && deviceUpgrade && deviceUpgrade.stage !== 'recommendation' && isPlanJourneyRequest(text)) {
         console.info('[Spectra journey] switching from device upgrade to mobile plan')
         setDeviceUpgrade(null)
         setTroubleshooting(null)
         setExecutiveJourney(null)
+        setWifiJourney(null)
         setPlanRecommendation(undefined)
         setCompletedJourneyQuestions([])
         const result = await sendMessage(next, customerProfile, false, [], null)
@@ -380,6 +431,7 @@ function App() {
         setPlanRecommendation(undefined)
         setTroubleshooting(null)
         setExecutiveJourney(null)
+        setWifiJourney(null)
         const startedUpgrade = beginDeviceUpgrade()
         setDeviceUpgrade(startedUpgrade)
         setMessages([...next, { role: 'assistant', content: deviceUpgradeQuestion(startedUpgrade.stage) }])
@@ -456,6 +508,7 @@ function App() {
         const startedUpgrade = beginDeviceUpgrade()
         setDeviceUpgrade(startedUpgrade)
         setExecutiveJourney(null)
+        setWifiJourney(null)
         setTroubleshooting(null)
         setPlanJourneyStarted(false)
         setCompletedJourneyQuestions([])
@@ -496,6 +549,7 @@ function App() {
     setTroubleshooting(null)
     setDeviceUpgrade(null)
     setExecutiveJourney(null)
+    setWifiJourney(null)
     setInput('')
     setChatError('')
   }
@@ -537,6 +591,7 @@ function App() {
     setDeviceUpgrade(startedUpgrade)
     setTroubleshooting(null)
     setExecutiveJourney(null)
+    setWifiJourney(null)
     setPlanJourneyStarted(false)
     setCompletedJourneyQuestions([])
     setCurrentJourneyStage(null)
@@ -547,6 +602,30 @@ function App() {
       { role: 'assistant', content: initialMessages[0].content },
       { role: 'user', content: 'I’m thinking about upgrading my phone. What should I consider?' },
       { role: 'assistant', content: deviceUpgradeQuestion(startedUpgrade.stage) },
+    ])
+    setSpectraOpen(true)
+  }
+
+  function runAdvancedWifiJourney() {
+    if (sending) return
+    setDemoOpen(false)
+    setSignedIn(true)
+    setBillJourney(null)
+    setTroubleshooting(null)
+    setDeviceUpgrade(null)
+    setExecutiveJourney(null)
+    setPlanJourneyStarted(false)
+    setCompletedJourneyQuestions([])
+    setCurrentJourneyStage(null)
+    setPlanRecommendation(undefined)
+    setCustomerProfile(emptyCustomerProfile)
+    setChatError('')
+    const started = beginWifiUsageJourney()
+    setWifiJourney(started)
+    setMessages([
+      { role: 'assistant', content: initialMessages[0].content },
+      { role: 'user', content: 'Which devices are using the most internet in my house?' },
+      { role: 'assistant', content: wifiUsageSummaryReply() },
     ])
     setSpectraOpen(true)
   }
@@ -570,7 +649,8 @@ function App() {
     setBillJourney(null)
     setTroubleshooting(state)
     setDeviceUpgrade(null)
-      setExecutiveJourney(null)
+    setExecutiveJourney(null)
+    setWifiJourney(null)
     setPlanJourneyStarted(false)
     setCompletedJourneyQuestions([])
     setCurrentJourneyStage(null)
@@ -630,7 +710,7 @@ function App() {
         {page === 'architecture' && <ArchitecturePage onChat={() => setSpectraOpen(true)} />}
         {page === 'about' && <AboutSpectrumPage onNavigate={navigate} />}
         {page === 'support' && <SupportPage onNavigate={navigate} onChat={() => setSpectraOpen(true)} />}
-        {page === 'account' && <AccountPage signedIn={signedIn} email={email} setEmail={setEmail} onSignIn={() => setSignedIn(true)} onChat={() => setSpectraOpen(true)} />}
+        {page === 'account' && <AccountPage signedIn={signedIn} email={email} setEmail={setEmail} onSignIn={() => setSignedIn(true)} onChat={() => setSpectraOpen(true)} onCheckUsage={() => runAdvancedWifiJourney()} />}
         {page === 'cart' && <CartPage count={cartCount} label={cartLabel} monthlyPrice={cartMonthlyPrice} onNavigate={navigate} onRemove={() => setCartCount(0)} />}
         {page === 'checkout' && <CheckoutPage step={checkoutStep} label={cartLabel} monthlyPrice={cartMonthlyPrice} setStep={(next) => setCheckoutStep(checkoutStep === 3 && next === 1 ? 4 : next)} />}
       </main>
@@ -656,6 +736,7 @@ function App() {
         {planRecommendation && !troubleshooting && <RecommendationSummary profile={customerProfile} recommendation={planRecommendation} onAdd={() => addRecommendationToCart(planRecommendation)} />}
         {deviceUpgrade && <DeviceUpgradePanel state={deviceUpgrade} onImage={analyzeJourneyImage} imageAnalyzing={imageAnalyzing} onSelect={(answer) => submitMessage(undefined, answer)} onAdd={() => deviceUpgrade.recommendation && addUpgradeDeviceToCart(deviceUpgrade.recommendation.name)} onBrowse={() => { setSpectraOpen(false); navigate('devices') }} disabled={sending} />}
         {executiveJourney && <ExecutiveJourneyPanel state={executiveJourney} onSelect={(answer) => submitMessage(undefined, answer)} disabled={sending} />}
+        {wifiJourney && wifiJourney.stage !== 'done' && <AdvancedWifiPanel state={wifiJourney} schedules={wifiSchedules} onSelect={(answer) => submitMessage(undefined, answer)} disabled={sending} />}
         {messages.length === 1 && <div className="suggestion-chips"><span className="suggestion-heading">Popular requests</span>{commonRequests.map((request) => <button key={request.label} onClick={() => submitMessage(undefined, request.prompt)} disabled={sending}>{request.label} <Icon name="arrow" size={13} /></button>)}</div>}
         {messages.length === 1 && <button className="troubleshooting-demo-button" onClick={runTroubleshootingDemo} disabled={sending}><Icon name="play" size={14} /> Demo Walkthrough: bedroom WiFi fix</button>}
         {planJourneyStarted && currentJourneyStage && <JourneyQuickReplies stage={currentJourneyStage} onSelect={(answer) => submitMessage(undefined, answer)} disabled={sending} />}
@@ -663,7 +744,7 @@ function App() {
         <p className="chat-disclaimer">Spectra uses AI and can make mistakes. Don’t share sensitive info.</p>
       </aside>}
 
-      {demoOpen && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setDemoOpen(false) }}><section className="demo-modal" role="dialog" aria-modal="true" aria-labelledby="demo-title"><div className="demo-modal-top"><span className="demo-kicker"><Icon name="spark" size={16} /> SPECTRUM EXPERIENCE STUDIO</span><button className="panel-close" onClick={() => setDemoOpen(false)} aria-label="Close executive demo"><Icon name="close" /></button></div><h2 id="demo-title">A more personal kind<br />of connection.</h2><p className="demo-intro">Explore how AI can make every customer moment feel more thoughtful. Choose a journey to begin.</p><div className="walkthrough-grid">{walkthroughs.map((item, index) => <button key={item.id} className="walkthrough-tile" onClick={() => item.id === 'upgrade' ? runDeviceUpgradeJourney() : item.id === 'sales' ? runWalkthrough(item.prompt) : item.id === 'care' ? runBillJourney('billing') : item.id === 'compare' ? runBillJourney('compare') : runExecutiveJourney(item.id as DemoJourneyId, item.prompt)}><span className="tile-icon"><Icon name={item.icon} size={19} /></span><span className="tile-number">0{index + 1}</span><strong>{item.title}</strong><small>{item.text}</small><span className="tile-arrow"><Icon name="arrow" size={16} /></span></button>)}</div><div className="demo-modal-foot"><span><i className="online-dot" /> Interactive preview</span><span>Powered by Spectrum AI</span></div></section></div>}
+      {demoOpen && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setDemoOpen(false) }}><section className="demo-modal" role="dialog" aria-modal="true" aria-labelledby="demo-title"><div className="demo-modal-top"><span className="demo-kicker"><Icon name="spark" size={16} /> SPECTRUM EXPERIENCE STUDIO</span><button className="panel-close" onClick={() => setDemoOpen(false)} aria-label="Close executive demo"><Icon name="close" /></button></div><h2 id="demo-title">A more personal kind<br />of connection.</h2><p className="demo-intro">Explore how AI can make every customer moment feel more thoughtful. Choose a journey to begin.</p><div className="walkthrough-grid">{walkthroughs.map((item, index) => <button key={item.id} className="walkthrough-tile" onClick={() => item.id === 'upgrade' ? runDeviceUpgradeJourney() : item.id === 'sales' ? runWalkthrough(item.prompt) : item.id === 'care' ? runBillJourney('billing') : item.id === 'compare' ? runBillJourney('compare') : item.id === 'wifi' ? runAdvancedWifiJourney() : runExecutiveJourney(item.id as DemoJourneyId, item.prompt)}><span className="tile-icon"><Icon name={item.icon} size={19} /></span><span className="tile-number">0{index + 1}</span><strong>{item.title}</strong><small>{item.text}</small><span className="tile-arrow"><Icon name="arrow" size={16} /></span></button>)}</div><div className="demo-modal-foot"><span><i className="online-dot" /> Interactive preview</span><span>Powered by Spectrum AI</span></div></section></div>}
     </>
   )
 }
@@ -676,6 +757,33 @@ function ExecutiveJourneyPanel({ state, onSelect, disabled }: { state: DemoJourn
     {!state.complete && step && <div className="executive-journey-choices"><span>{step.prompt}</span><div>{step.options.map((option) => <button key={option} onClick={() => onSelect(option)} disabled={disabled}>{option}</button>)}</div></div>}
     {state.answers.length > 0 && <details className="executive-journey-answers"><summary>{state.complete ? 'Journey summary' : 'Your answers so far'}</summary><ol>{state.answers.map((answer, index) => <li key={`${index}-${answer}`}>{answer}</li>)}</ol></details>}
     {state.complete && <div className="executive-journey-done"><Icon name="check" size={15} /><span>All steps complete. You can start another demo using Executive Demo.</span></div>}
+  </section>
+}
+
+function AdvancedWifiPanel({ state, schedules, onSelect, disabled }: { state: WifiJourneyState; schedules: Record<string, WifiPauseSchedule>; onSelect: (answer: string) => void; disabled: boolean }) {
+  const ranked = rankByNightUsage(demoHousehold.devices)
+  const target = findWifiDevice(state.targetDeviceId)
+  const maxDaily = Math.max(...ranked.map((device) => device.dailyGB))
+  return <section className="wifi-usage-card" aria-label="Household device usage">
+    <div className="wifi-usage-header"><span className="executive-journey-icon"><Icon name="wifi" size={16} /></span><div><strong>{demoHousehold.accountName}</strong><small>{demoHousehold.planName}</small></div></div>
+    <div className="wifi-usage-list">
+      {ranked.map((device) => <div key={device.id} className={device.id === target?.id ? 'wifi-usage-row wifi-usage-row-top' : 'wifi-usage-row'}>
+        <div className="wifi-usage-row-top-line"><strong>{device.name}</strong><span>{device.dailyGB} GB today</span></div>
+        <div className="wifi-usage-bar" aria-hidden="true"><span style={{ width: `${Math.round((device.dailyGB / maxDaily) * 100)}%` }} /></div>
+        <small>{device.owner} · {device.nightGB} GB overnight (10 PM–7 AM){schedules[device.id] ? ` · Paused ${schedules[device.id].start}–${schedules[device.id].end}` : ''}</small>
+      </div>)}
+    </div>
+    {state.stage === 'usage' && <div className="wifi-usage-actions">
+      <button className="button-primary" disabled={disabled} onClick={() => onSelect(`Pause ${target?.name ?? 'that device'} from WiFi overnight`)}>Pause {target?.name} overnight <Icon name="arrow" size={14} /></button>
+      <button className="button-text-dark" disabled={disabled} onClick={() => onSelect('No thanks, that’s all for now.')}>Not right now</button>
+    </div>}
+    {state.stage === 'confirm' && <div className="wifi-usage-confirm">
+      <p>Pause <strong>{target?.name}</strong> from WiFi every night between <strong>{state.schedule.start}</strong> and <strong>{state.schedule.end}</strong>?</p>
+      <div className="wifi-usage-actions">
+        <button className="button-primary" disabled={disabled} onClick={() => onSelect('Yes, approve that schedule.')}>Approve <Icon name="check" size={14} /></button>
+        <button className="button-text-dark" disabled={disabled} onClick={() => onSelect('No, cancel that.')}>Cancel</button>
+      </div>
+    </div>}
   </section>
 }
 
@@ -1231,11 +1339,11 @@ function SupportPage({ onNavigate, onChat }: { onNavigate: (page: Page) => void;
   return <><section className="support-hero"><div className="page-width support-hero-inner"><div><span className="eyebrow">HERE WHEN YOU NEED US</span><h1>Let’s get you<br /><em>back to good.</em></h1><p>Find an answer, get step-by-step help or connect with someone who can help.</p><button className="support-search" onClick={() => setTopic('')}><Icon name="search" /><input aria-label="Search support" placeholder="Search for help with anything" value={topic} onChange={(event) => setTopic(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { onChat(); setTimeout(() => window.dispatchEvent(new CustomEvent('spectra-message', { detail: topic })), 0) } }} /><Icon name="arrow" size={16} /></button></div><div className="support-visual"><div className="support-sun" /><div className="support-person"><i /><b /></div><span>WE’RE<br />HERE.</span><div className="support-orbit" /></div></div></section><section className="section-block page-width support-topics"><div className="section-heading"><div><span className="eyebrow eyebrow-red">HOW CAN WE HELP?</span><h2>Let’s start with what you need.</h2></div></div><div className="support-topic-grid">{topics.map((item) => <button key={item.label} onClick={() => { onChat(); setTimeout(() => window.dispatchEvent(new CustomEvent('spectra-message', { detail: item.prompt })), 0) }}><span className="support-topic-icon"><Icon name={item.icon} size={20} /></span><strong>{item.label}</strong><Icon name="arrow" size={16} /></button>)}</div></section><section className="support-contact"><div className="page-width support-contact-inner"><div><span className="eyebrow eyebrow-red">A REAL PERSON IS HERE, TOO</span><h2>Let’s talk it through.</h2><p>Spectra can help right now, or visit My Spectrum App for support with your account.</p></div><div className="support-contact-actions"><button className="button-primary" onClick={onChat}><Icon name="spark" size={16} /> Chat with Spectra</button><button className="button-outline" onClick={() => onNavigate('account')}>Go to My Spectrum App <Icon name="arrow" size={15} /></button></div></div></section></>
 }
 
-function AccountPage({ signedIn, email, setEmail, onSignIn, onChat }: { signedIn: boolean; email: string; setEmail: (email: string) => void; onSignIn: () => void; onChat: () => void }) {
+function AccountPage({ signedIn, email, setEmail, onSignIn, onChat, onCheckUsage }: { signedIn: boolean; email: string; setEmail: (email: string) => void; onSignIn: () => void; onChat: () => void; onCheckUsage: () => void }) {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   function submit(event: FormEvent) { event.preventDefault(); onSignIn() }
-  return <section className="account-page"><div className="account-panel"><button className="account-wordmark" aria-label="Spectrum"><SpectrumLogo /></button>{signedIn ? <div className="account-welcome"><span className="account-success"><Icon name="check" size={24} /></span><span className="eyebrow eyebrow-red">MYSPECTRUM</span><h1>You’re in,<br /><em>welcome back.</em></h1><p>Your connected life, all in one place.</p><div className="account-summary"><div><span>Account</span><strong>{email || 'Customer account'}</strong></div><div><span>Services</span><strong>Mobile · Internet</strong></div><div><span>Amount due</span><strong>$126.40</strong></div></div><button className="button-primary" onClick={onChat}>Get help with your account <Icon name="arrow" size={15} /></button></div> : <><span className="eyebrow eyebrow-red">MYSPECTRUM</span><h1>Good to see<br /><em>you again.</em></h1><p>Sign in to manage your services, check your usage, pay your bill and more.</p><form className="signin-form" onSubmit={submit}><label htmlFor="signin-email">Username or email</label><input id="signin-email" type="text" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Enter your username or email" required /><label htmlFor="signin-password">Password</label><div className="password-field"><input id="signin-password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" required /><button type="button" onClick={() => setShowPassword(!showPassword)}>{showPassword ? 'Hide' : 'Show'}</button></div><button className="button-primary signin-button">Sign in <Icon name="arrow" size={16} /></button></form><div className="signin-help"><button>Forgot username?</button><span>·</span><button>Forgot password?</button></div><div className="create-account">New to My Spectrum App? <button onClick={() => setEmail('')}>Create an account <Icon name="arrow" size={14} /></button></div></>}</div><div className="account-side"><span className="account-side-glow" /><div className="account-side-content"><span className="eyebrow">YOUR SPECTRUM LIFE, TOGETHER</span><h2>Everything you need,<br /><em>right where you need it.</em></h2><p>One simple place to stay on top of your services, your way.</p><div className="account-feature"><Icon name="phone" /><span><strong>Manage your services</strong><small>See your Spectrum services at a glance.</small></span></div><div className="account-feature"><Icon name="cart" /><span><strong>Stay on top of your bill</strong><small>Review, pay and manage your account.</small></span></div><div className="account-feature"><Icon name="spark" /><span><strong>Get help when it matters</strong><small>Find answers and support, all in one place.</small></span></div></div></div></section>
+  return <section className="account-page"><div className="account-panel"><button className="account-wordmark" aria-label="Spectrum"><SpectrumLogo /></button>{signedIn ? <div className="account-welcome"><span className="account-success"><Icon name="check" size={24} /></span><span className="eyebrow eyebrow-red">MYSPECTRUM</span><h1>You’re in,<br /><em>welcome back.</em></h1><p>Your connected life, all in one place.</p><div className="account-summary"><div><span>Account</span><strong>{email || demoHousehold.accountName}</strong></div><div><span>Services</span><strong>Internet · Mobile</strong></div><div><span>Amount due</span><strong>$126.40</strong></div></div><div className="account-actions-row"><button className="button-primary" onClick={onChat}>Get help with your account <Icon name="arrow" size={15} /></button><button className="button-outline" onClick={onCheckUsage}><Icon name="wifi" size={15} /> Check device usage (Advanced WiFi)</button></div></div> : <><span className="eyebrow eyebrow-red">MYSPECTRUM</span><h1>Good to see<br /><em>you again.</em></h1><p>Sign in to manage your services, check your usage, pay your bill and more.</p><form className="signin-form" onSubmit={submit}><label htmlFor="signin-email">Username or email</label><input id="signin-email" type="text" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Enter your username or email" required /><label htmlFor="signin-password">Password</label><div className="password-field"><input id="signin-password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" required /><button type="button" onClick={() => setShowPassword(!showPassword)}>{showPassword ? 'Hide' : 'Show'}</button></div><button className="button-primary signin-button">Sign in <Icon name="arrow" size={16} /></button></form><div className="signin-help"><button>Forgot username?</button><span>·</span><button>Forgot password?</button></div><div className="create-account">New to My Spectrum App? <button onClick={() => setEmail('')}>Create an account <Icon name="arrow" size={14} /></button></div></>}</div><div className="account-side"><span className="account-side-glow" /><div className="account-side-content"><span className="eyebrow">YOUR SPECTRUM LIFE, TOGETHER</span><h2>Everything you need,<br /><em>right where you need it.</em></h2><p>One simple place to stay on top of your services, your way.</p><div className="account-feature"><Icon name="phone" /><span><strong>Manage your services</strong><small>See your Spectrum services at a glance.</small></span></div><div className="account-feature"><Icon name="cart" /><span><strong>Stay on top of your bill</strong><small>Review, pay and manage your account.</small></span></div><div className="account-feature"><Icon name="spark" /><span><strong>Get help when it matters</strong><small>Find answers and support, all in one place.</small></span></div></div></div></section>
 }
 
 function CartPage({ count, label, monthlyPrice, onNavigate, onRemove }: { count: number; label: string; monthlyPrice: number | null; onNavigate: (page: Page) => void; onRemove: () => void }) {
