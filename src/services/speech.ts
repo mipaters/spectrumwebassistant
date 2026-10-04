@@ -66,25 +66,44 @@ export async function listenOnce(): Promise<string> {
   })
 }
 let activeSynthesizer: SdkTypes.SpeechSynthesizer | null = null
+let activePlayer: SdkTypes.SpeakerAudioDestination | null = null
+let speakGeneration = 0
 
 export function stopSpeaking() {
-  activeSynthesizer?.close()
+  speakGeneration += 1
+  // Closing the synthesizer alone does not halt audio already queued to the
+  // speaker, which is what caused replies to overlap. Pausing/closing the
+  // underlying player stops sound immediately.
+  try { activePlayer?.pause() } catch { /* already stopped */ }
+  try { activePlayer?.close() } catch { /* already stopped */ }
+  try { activeSynthesizer?.close() } catch { /* already closed */ }
   activeSynthesizer = null
+  activePlayer = null
 }
 
 export async function speak(text: string): Promise<void> {
   stopSpeaking()
+  const generation = speakGeneration
   const { token, region } = await getToken()
   const sdk = await loadSdk()
+  if (generation !== speakGeneration) return
   const speechConfig = sdk.SpeechConfig.fromAuthorizationToken(token, region)
   speechConfig.speechSynthesisVoiceName = 'en-CA-ClaraNeural'
-  const synthesizer = new sdk.SpeechSynthesizer(speechConfig, sdk.AudioConfig.fromDefaultSpeakerOutput())
+  const player = new sdk.SpeakerAudioDestination()
+  const synthesizer = new sdk.SpeechSynthesizer(speechConfig, sdk.AudioConfig.fromSpeakerOutput(player))
   activeSynthesizer = synthesizer
+  activePlayer = player
   await new Promise<void>((resolve) => {
+    const finish = () => {
+      try { synthesizer.close() } catch { /* already closed */ }
+      if (activeSynthesizer === synthesizer) activeSynthesizer = null
+      if (activePlayer === player) activePlayer = null
+      resolve()
+    }
     synthesizer.speakTextAsync(
       text.slice(0, 1500),
-      () => { synthesizer.close(); if (activeSynthesizer === synthesizer) activeSynthesizer = null; resolve() },
-      () => { synthesizer.close(); if (activeSynthesizer === synthesizer) activeSynthesizer = null; resolve() },
+      () => finish(),
+      () => finish(),
     )
   })
 }
